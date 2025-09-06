@@ -1,0 +1,1952 @@
+// import 'package:flutter/material.dart';
+// import 'package:flutter_riverpod/flutter_riverpod.dart';
+// import 'dart:math';
+
+// import 'package:the_prisoners_dilema/widgets/pay_off_matrix.dart';
+
+// // Game Models
+// enum GameAction { cooperate, defect }
+// enum GameMode { vsComputer, vsHuman }
+// enum StrategyType {
+//   alwaysCooperate,
+//   alwaysDefect,
+//   titForTat,
+//   generousTitForTat,
+//   titForTwoTats,
+//   grudger,
+//   random,
+//   pavlov,
+//   suspicious,
+//   generous,
+// }
+
+// class GameResult {
+//   final int player1Score;
+//   final int player2Score;
+//   final GameAction player1Action;
+//   final GameAction player2Action;
+
+//   GameResult({
+//     required this.player1Score,
+//     required this.player2Score,
+//     required this.player1Action,
+//     required this.player2Action,
+//   });
+// }
+
+// class GameState {
+//   final List<GameResult> history;
+//   final int totalPlayer1Score;
+//   final int totalPlayer2Score;
+//   final GameMode mode;
+//   final StrategyType? computerStrategy;
+//   final int currentRound;
+//   final bool gameEnded;
+//   final String? winner;
+
+//   GameState({
+//     this.history = const [],
+//     this.totalPlayer1Score = 0,
+//     this.totalPlayer2Score = 0,
+//     this.mode = GameMode.vsComputer,
+//     this.computerStrategy,
+//     this.currentRound = 0,
+//     this.gameEnded = false,
+//     this.winner,
+//   });
+
+//   GameState copyWith({
+//     List<GameResult>? history,
+//     int? totalPlayer1Score,
+//     int? totalPlayer2Score,
+//     GameMode? mode,
+//     StrategyType? computerStrategy,
+//     int? currentRound,
+//     bool? gameEnded,
+//     String? winner,
+//   }) {
+//     return GameState(
+//       history: history ?? this.history,
+//       totalPlayer1Score: totalPlayer1Score ?? this.totalPlayer1Score,
+//       totalPlayer2Score: totalPlayer2Score ?? this.totalPlayer2Score,
+//       mode: mode ?? this.mode,
+//       computerStrategy: computerStrategy ?? this.computerStrategy,
+//       currentRound: currentRound ?? this.currentRound,
+//       gameEnded: gameEnded ?? this.gameEnded,
+//       winner: winner ?? this.winner,
+//     );
+//   }
+// }
+
+// // Strategy Interface and Implementations
+// abstract class Strategy {
+//   String get name;
+//   String get description;
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1);
+// }
+
+// class AlwaysCooperateStrategy implements Strategy {
+//   @override
+//   String get name => "Always Cooperate (Angel)";
+  
+//   @override
+//   String get description => "Always chooses to cooperate, regardless of opponent's actions. Very trusting but vulnerable to exploitation.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     return GameAction.cooperate;
+//   }
+// }
+
+// class AlwaysDefectStrategy implements Strategy {
+//   @override
+//   String get name => "Always Defect (Devil)";
+  
+//   @override
+//   String get description => "Always chooses to defect. Exploits cooperative opponents but performs poorly against other defectors.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     return GameAction.defect;
+//   }
+// }
+
+// class TitForTatStrategy implements Strategy {
+//   @override
+//   String get name => "Tit for Tat";
+  
+//   @override
+//   String get description => "Cooperates first, then copies opponent's last move. Simple, forgiving, and highly successful in tournaments.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     if (history.isEmpty) return GameAction.cooperate;
+    
+//     final lastResult = history.last;
+//     final opponentLastAction = isPlayer1 ? lastResult.player2Action : lastResult.player1Action;
+//     return opponentLastAction;
+//   }
+// }
+
+// class GrudgerStrategy implements Strategy {
+//   @override
+//   String get name => "Grudger";
+  
+//   @override
+//   String get description => "Cooperates until opponent defects once, then defects forever. Unforgiving but effective against exploiters.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     for (final result in history) {
+//       final opponentAction = isPlayer1 ? result.player2Action : result.player1Action;
+//       if (opponentAction == GameAction.defect) {
+//         return GameAction.defect;
+//       }
+//     }
+//     return GameAction.cooperate;
+//   }
+// }
+
+// class RandomStrategy implements Strategy {
+//   final Random _random = Random();
+  
+//   @override
+//   String get name => "Random";
+  
+//   @override
+//   String get description => "Randomly chooses between cooperation and defection with 50% probability each.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     return _random.nextBool() ? GameAction.cooperate : GameAction.defect;
+//   }
+// }
+
+// class PavlovStrategy implements Strategy {
+//   @override
+//   String get name => "Pavlov (Win-Stay, Lose-Shift)";
+  
+//   @override
+//   String get description => "Repeats last action if it was rewarding, changes if it wasn't. Adapts based on payoff received.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     if (history.isEmpty) return GameAction.cooperate;
+    
+//     final lastResult = history.last;
+//     final myLastAction = isPlayer1 ? lastResult.player1Action : lastResult.player2Action;
+//     final myLastScore = isPlayer1 ? lastResult.player1Score : lastResult.player2Score;
+    
+//     // If last score was good (3 or 5 points), repeat the action
+//     // If last score was bad (0 or 1 points), switch action
+//     if (myLastScore >= 3) {
+//       return myLastAction;
+//     } else {
+//       return myLastAction == GameAction.cooperate ? GameAction.defect : GameAction.cooperate;
+//     }
+//   }
+// }
+
+// // Game Logic Provider
+// class GameNotifier extends StateNotifier<GameState> {
+//   GameNotifier() : super(GameState());
+
+//   void setGameMode(GameMode mode, StrategyType? strategy) {
+//     state = GameState(mode: mode, computerStrategy: strategy);
+//   }
+
+//   void resetGame() {
+//     state = GameState(
+//       mode: state.mode,
+//       computerStrategy: state.computerStrategy,
+//     );
+//   }
+
+//   Strategy _getStrategy(StrategyType type) {
+//     switch (type) {
+//       case StrategyType.alwaysCooperate:
+//         return AlwaysCooperateStrategy();
+//       case StrategyType.alwaysDefect:
+//         return AlwaysDefectStrategy();
+//       case StrategyType.titForTat:
+//         return TitForTatStrategy();
+//       case StrategyType.grudger:
+//         return GrudgerStrategy();
+//       case StrategyType.random:
+//         return RandomStrategy();
+//       case StrategyType.pavlov:
+//         return PavlovStrategy();
+//       default:
+//         return TitForTatStrategy();
+//     }
+//   }
+
+//   Map<String, int> _calculatePayoff(GameAction player1Action, GameAction player2Action) {
+//     if (player1Action == GameAction.cooperate && player2Action == GameAction.cooperate) {
+//       return {'player1': 3, 'player2': 3}; // Mutual cooperation
+//     } else if (player1Action == GameAction.defect && player2Action == GameAction.defect) {
+//       return {'player1': 1, 'player2': 1}; // Mutual defection
+//     } else if (player1Action == GameAction.cooperate && player2Action == GameAction.defect) {
+//       return {'player1': 0, 'player2': 5}; // Player 1 exploited
+//     } else {
+//       return {'player1': 5, 'player2': 0}; // Player 2 exploited
+//     }
+//   }
+
+//   void playRound(GameAction player1Action, [GameAction? player2Action]) {
+//     GameAction finalPlayer2Action;
+
+//     if (state.mode == GameMode.vsComputer && state.computerStrategy != null) {
+//       final strategy = _getStrategy(state.computerStrategy!);
+//       finalPlayer2Action = strategy.getNextAction(state.history, false);
+//     } else {
+//       finalPlayer2Action = player2Action ?? GameAction.cooperate;
+//     }
+
+//     final payoff = _calculatePayoff(player1Action, finalPlayer2Action);
+//     final result = GameResult(
+//       player1Score: payoff['player1']!,
+//       player2Score: payoff['player2']!,
+//       player1Action: player1Action,
+//       player2Action: finalPlayer2Action,
+//     );
+
+//     final newHistory = [...state.history, result];
+//     final newPlayer1Total = state.totalPlayer1Score + result.player1Score;
+//     final newPlayer2Total = state.totalPlayer2Score + result.player2Score;
+//     final newRound = state.currentRound + 1;
+
+//     // Check win condition (first to 50 points or after 20 rounds)
+//     bool gameEnded = false;
+//     String? winner;
+    
+//     if (newPlayer1Total >= 50 || newPlayer2Total >= 50 || newRound >= 20) {
+//       gameEnded = true;
+//       if (newPlayer1Total > newPlayer2Total) {
+//         winner = "Player 1";
+//       } else if (newPlayer2Total > newPlayer1Total) {
+//         winner = state.mode == GameMode.vsComputer ? "Computer" : "Player 2";
+//       } else {
+//         winner = "Tie";
+//       }
+//     }
+
+//     state = state.copyWith(
+//       history: newHistory,
+//       totalPlayer1Score: newPlayer1Total,
+//       totalPlayer2Score: newPlayer2Total,
+//       currentRound: newRound,
+//       gameEnded: gameEnded,
+//       winner: winner,
+//     );
+//   }
+// }
+
+// final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
+//   return GameNotifier();
+// });
+
+// // Main App
+// void main() {
+//   runApp(ProviderScope(child: PrisonersDilemmaApp()));
+// }
+
+// class PrisonersDilemmaApp extends StatelessWidget {
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'Prisoner\'s Dilemma',
+//       theme: ThemeData(
+//         primarySwatch: Colors.blue,
+//         visualDensity: VisualDensity.adaptivePlatformDensity,
+//       ),
+//       home: HomeScreen(),
+//     );
+//   }
+// }
+
+// class HomeScreen extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Prisoner\'s Dilemma'),
+//         backgroundColor: Colors.blue[800],
+//       ),
+//       body: Center(
+//         child: Column(
+//           mainAxisAlignment: MainAxisAlignment.center,
+//           children: [
+//             Text(
+//               '🔒 Prisoner\'s Dilemma 🔒',
+//               style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+//             ),
+//             SizedBox(height: 20),
+//             Text(
+//               'Choose your game mode:',
+//               style: TextStyle(fontSize: 18),
+//             ),
+//             SizedBox(height: 30),
+//             ElevatedButton.icon(
+//               onPressed: () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(builder: (context) => StrategySelectionScreen()),
+//                 );
+//               },
+//               icon: Icon(Icons.computer),
+//               label: Text('VS Computer'),
+//               style: ElevatedButton.styleFrom(
+//                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+//                 textStyle: TextStyle(fontSize: 16),
+//               ),
+//             ),
+//             SizedBox(height: 15),
+//             ElevatedButton.icon(
+//               onPressed: () {
+//                 ref.read(gameProvider.notifier).setGameMode(GameMode.vsHuman, null);
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(builder: (context) => GameScreen()),
+//                 );
+//               },
+//               icon: Icon(Icons.people),
+//               label: Text('VS Human'),
+//               style: ElevatedButton.styleFrom(
+//                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+//                 textStyle: TextStyle(fontSize: 16),
+//               ),
+//             ),
+//             SizedBox(height: 30),
+//             ElevatedButton.icon(
+//               onPressed: () {
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(builder: (context) => StrategyPage()),
+//                 );
+//               },
+//               icon: Icon(Icons.library_books),
+//               label: Text('Strategy Guide'),
+//               style: ElevatedButton.styleFrom(
+//                 padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+//                 textStyle: TextStyle(fontSize: 16),
+//                 backgroundColor: Colors.green,
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// class StrategySelectionScreen extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final strategies = [
+//       {'type': StrategyType.titForTat, 'name': 'Tit for Tat', 'difficulty': 'Medium'},
+//       {'type': StrategyType.alwaysCooperate, 'name': 'Always Cooperate', 'difficulty': 'Easy'},
+//       {'type': StrategyType.alwaysDefect, 'name': 'Always Defect', 'difficulty': 'Easy'},
+//       {'type': StrategyType.grudger, 'name': 'Grudger', 'difficulty': 'Hard'},
+//       {'type': StrategyType.random, 'name': 'Random', 'difficulty': 'Medium'},
+//       {'type': StrategyType.pavlov, 'name': 'Pavlov', 'difficulty': 'Hard'},
+//     ];
+
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Choose AI Strategy'),
+//         backgroundColor: Colors.blue[800],
+//       ),
+//       body: ListView.builder(
+//         padding: EdgeInsets.all(16),
+//         itemCount: strategies.length,
+//         itemBuilder: (context, index) {
+//           final strategy = strategies[index];
+//           Color difficultyColor = strategy['difficulty'] == 'Easy'
+//               ? Colors.green
+//               : strategy['difficulty'] == 'Medium'
+//                   ? Colors.orange
+//                   : Colors.red;
+
+//           return Card(
+//             margin: EdgeInsets.symmetric(vertical: 8),
+//             child: ListTile(
+//               title: Text(
+//                 strategy['name'] as String,
+//                 style: TextStyle(fontWeight: FontWeight.bold),
+//               ),
+//               trailing: Container(
+//                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+//                 decoration: BoxDecoration(
+//                   color: difficultyColor,
+//                   borderRadius: BorderRadius.circular(12),
+//                 ),
+//                 child: Text(
+//                   strategy['difficulty'] as String,
+//                   style: TextStyle(color: Colors.white, fontSize: 12),
+//                 ),
+//               ),
+//               onTap: () {
+//                 ref.read(gameProvider.notifier).setGameMode(
+//                   GameMode.vsComputer,
+//                   strategy['type'] as StrategyType,
+//                 );
+//                 Navigator.push(
+//                   context,
+//                   MaterialPageRoute(builder: (context) => GameScreen()),
+//                 );
+//               },
+//             ),
+//           );
+//         },
+//       ),
+//     );
+//   }
+// }
+
+// class GameScreen extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final gameState = ref.watch(gameProvider);
+
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Round ${gameState.currentRound + 1}'),
+//         backgroundColor: Colors.blue[800],
+//         actions: [
+//           IconButton(
+//             icon: Icon(Icons.refresh),
+//             onPressed: () {
+//               ref.read(gameProvider.notifier).resetGame();
+//             },
+//           ),
+//         ],
+//       ),
+//       body: gameState.gameEnded
+//           ? GameEndScreen()
+//           : Column(
+//               children: [
+//                 // Score Display
+//                 Container(
+//                   width: double.infinity,
+//                   padding: EdgeInsets.all(16),
+//                   color: Colors.grey[100],
+//                   child: Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceAround,
+//                     children: [
+//                       Column(
+//                         children: [
+//                           Text('Player 1', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                           Text('${gameState.totalPlayer1Score}', style: TextStyle(fontSize: 24, color: Colors.blue)),
+//                         ],
+//                       ),
+//                       Column(
+//                         children: [
+//                           Text(gameState.mode == GameMode.vsComputer ? 'Computer' : 'Player 2',
+//                               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                           Text('${gameState.totalPlayer2Score}', style: TextStyle(fontSize: 24, color: Colors.red)),
+//                         ],
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+
+//                 // Stick Figures and Animation Area
+//                 Expanded(
+//                   child: StickFigureArea(),
+//                 ),
+
+//                 // Action Buttons
+//                 if (!gameState.gameEnded)
+//                   Container(
+//                     padding: EdgeInsets.all(16),
+//                     child: gameState.mode == GameMode.vsHuman
+//                         ? TwoPlayerControls()
+//                         : SinglePlayerControls(),
+//                   ),
+
+//                 // History
+//                 if (gameState.history.isNotEmpty)
+//                   Container(
+//                     height: 120,
+//                     child: GameHistoryWidget(),
+//                   ),
+//               ],
+//             ),
+//     );
+//   }
+// }
+
+// class StickFigureArea extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final gameState = ref.watch(gameProvider);
+    
+//     return Container(
+//       padding: EdgeInsets.all(20),
+//       child: Row(
+//         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//         children: [
+//           // Player 1 Stick Figure
+//           Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               StickFigure(
+//                 isPlayer1: true,
+//                 lastAction: gameState.history.isNotEmpty
+//                     ? gameState.history.last.player1Action
+//                     : null,
+//               ),
+//               SizedBox(height: 10),
+//               Text(
+//                 'Player 1',
+//                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//               ),
+//             ],
+//           ),
+          
+//           // VS Text
+//           Text(
+//             'VS',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.grey[600]),
+//           ),
+          
+//           // Player 2/Computer Stick Figure
+//           Column(
+//             mainAxisAlignment: MainAxisAlignment.center,
+//             children: [
+//               StickFigure(
+//                 isPlayer1: false,
+//                 lastAction: gameState.history.isNotEmpty
+//                     ? gameState.history.last.player2Action
+//                     : null,
+//               ),
+//               SizedBox(height: 10),
+//               Text(
+//                 gameState.mode == GameMode.vsComputer ? 'Computer' : 'Player 2',
+//                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class StickFigure extends StatefulWidget {
+//   final bool isPlayer1;
+//   final GameAction? lastAction;
+
+//   const StickFigure({
+//     Key? key,
+//     required this.isPlayer1,
+//     this.lastAction,
+//   }) : super(key: key);
+
+//   @override
+//   _StickFigureState createState() => _StickFigureState();
+// }
+
+// class _StickFigureState extends State<StickFigure> with SingleTickerProviderStateMixin {
+//   late AnimationController _animationController;
+//   late Animation<double> _animation;
+
+//   @override
+//   void initState() {
+//     super.initState();
+//     _animationController = AnimationController(
+//       duration: Duration(milliseconds: 500),
+//       vsync: this,
+//     );
+//     _animation = Tween<double>(begin: 0.0, end: 1.0).animate(
+//       CurvedAnimation(parent: _animationController, curve: Curves.elasticOut),
+//     );
+//   }
+
+//   @override
+//   void didUpdateWidget(StickFigure oldWidget) {
+//     super.didUpdateWidget(oldWidget);
+//     if (widget.lastAction != oldWidget.lastAction && widget.lastAction != null) {
+//       _animationController.reset();
+//       _animationController.forward();
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return AnimatedBuilder(
+//       animation: _animation,
+//       builder: (context, child) {
+//         return Transform.scale(
+//           scale: 1.0 + (_animation.value * 0.2),
+//           child: Container(
+//             width: 100,
+//             height: 120,
+//             child: CustomPaint(
+//               painter: StickFigurePainter(
+//                 action: widget.lastAction,
+//                 color: widget.isPlayer1 ? Colors.blue : Colors.red,
+//               ),
+//             ),
+//           ),
+//         );
+//       },
+//     );
+//   }
+
+//   @override
+//   void dispose() {
+//     _animationController.dispose();
+//     super.dispose();
+//   }
+// }
+
+// class StickFigurePainter extends CustomPainter {
+//   final GameAction? action;
+//   final Color color;
+
+//   StickFigurePainter({this.action, required this.color});
+
+//   @override
+//   void paint(Canvas canvas, Size size) {
+//     final paint = Paint()
+//       ..color = color
+//       ..strokeWidth = 3
+//       ..style = PaintingStyle.stroke;
+
+//     final center = Offset(size.width / 2, size.height / 2);
+
+//     // Head
+//     canvas.drawCircle(
+//       Offset(center.dx, center.dy - 35),
+//       15,
+//       paint,
+//     );
+
+//     // Body
+//     canvas.drawLine(
+//       Offset(center.dx, center.dy - 20),
+//       Offset(center.dx, center.dy + 20),
+//       paint,
+//     );
+
+//     // Arms based on action
+//     if (action == GameAction.cooperate) {
+//       // Cooperative gesture - arms open
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx - 25, center.dy - 5),
+//         paint,
+//       );
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx + 25, center.dy - 5),
+//         paint,
+//       );
+      
+//       // Draw handshake symbol
+//       final textPainter = TextPainter(
+//         text: TextSpan(
+//           text: '🤝',
+//           style: TextStyle(fontSize: 20),
+//         ),
+//         textDirection: TextDirection.ltr,
+//       );
+//       textPainter.layout();
+//       textPainter.paint(
+//         canvas,
+//         Offset(center.dx - 10, center.dy - 60),
+//       );
+//     } else if (action == GameAction.defect) {
+//       // Defective gesture - arms crossed or pointing
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx - 20, center.dy + 5),
+//         paint,
+//       );
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx + 20, center.dy + 5),
+//         paint,
+//       );
+      
+//       // Draw sword symbol
+//       final textPainter = TextPainter(
+//         text: TextSpan(
+//           text: '⚔️',
+//           style: TextStyle(fontSize: 20),
+//         ),
+//         textDirection: TextDirection.ltr,
+//       );
+//       textPainter.layout();
+//       textPainter.paint(
+//         canvas,
+//         Offset(center.dx - 10, center.dy - 60),
+//       );
+//     } else {
+//       // Default arms
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx - 20, center.dy),
+//         paint,
+//       );
+//       canvas.drawLine(
+//         Offset(center.dx, center.dy - 10),
+//         Offset(center.dx + 20, center.dy),
+//         paint,
+//       );
+//     }
+
+//     // Legs
+//     canvas.drawLine(
+//       Offset(center.dx, center.dy + 20),
+//       Offset(center.dx - 15, center.dy + 45),
+//       paint,
+//     );
+//     canvas.drawLine(
+//       Offset(center.dx, center.dy + 20),
+//       Offset(center.dx + 15, center.dy + 45),
+//       paint,
+//     );
+//   }
+
+//   @override
+//   bool shouldRepaint(covariant CustomPainter oldDelegate) {
+//     return true;
+//   }
+// }
+
+// class SinglePlayerControls extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     return Row(
+//       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//       children: [
+//         ElevatedButton.icon(
+//           onPressed: () {
+//             ref.read(gameProvider.notifier).playRound(GameAction.cooperate);
+//           },
+//           icon: Text('🤝', style: TextStyle(fontSize: 20)),
+//           label: Text('Cooperate'),
+//           style: ElevatedButton.styleFrom(
+//             backgroundColor: Colors.green,
+//             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+//           ),
+//         ),
+//         ElevatedButton.icon(
+//           onPressed: () {
+//             ref.read(gameProvider.notifier).playRound(GameAction.defect);
+//           },
+//           icon: Text('⚔️', style: TextStyle(fontSize: 20)),
+//           label: Text('Defect'),
+//           style: ElevatedButton.styleFrom(
+//             backgroundColor: Colors.red,
+//             padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+// class TwoPlayerControls extends ConsumerStatefulWidget {
+//   @override
+//   _TwoPlayerControlsState createState() => _TwoPlayerControlsState();
+// }
+
+// class _TwoPlayerControlsState extends ConsumerState<TwoPlayerControls> {
+//   GameAction? player1Action;
+//   GameAction? player2Action;
+
+//   void _submitActions() {
+//     if (player1Action != null && player2Action != null) {
+//       ref.read(gameProvider.notifier).playRound(player1Action!, player2Action!);
+//       setState(() {
+//         player1Action = null;
+//         player2Action = null;
+//       });
+//     }
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Column(
+//       children: [
+//         Row(
+//           children: [
+//             Expanded(
+//               child: Column(
+//                 children: [
+//                   Text('Player 1 Choice:', style: TextStyle(fontWeight: FontWeight.bold)),
+//                   SizedBox(height: 8),
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                     children: [
+//                       ElevatedButton(
+//                         onPressed: () => setState(() => player1Action = GameAction.cooperate),
+//                         child: Text('🤝'),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: player1Action == GameAction.cooperate
+//                               ? Colors.green
+//                               : Colors.grey,
+//                         ),
+//                       ),
+//                       ElevatedButton(
+//                         onPressed: () => setState(() => player1Action = GameAction.defect),
+//                         child: Text('⚔️'),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: player1Action == GameAction.defect
+//                               ? Colors.red
+//                               : Colors.grey,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//             SizedBox(width: 20),
+//             Expanded(
+//               child: Column(
+//                 children: [
+//                   Text('Player 2 Choice:', style: TextStyle(fontWeight: FontWeight.bold)),
+//                   SizedBox(height: 8),
+//                   Row(
+//                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                     children: [
+//                       ElevatedButton(
+//                         onPressed: () => setState(() => player2Action = GameAction.cooperate),
+//                         child: Text('🤝'),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: player2Action == GameAction.cooperate
+//                               ? Colors.green
+//                               : Colors.grey,
+//                         ),
+//                       ),
+//                       ElevatedButton(
+//                         onPressed: () => setState(() => player2Action = GameAction.defect),
+//                         child: Text('⚔️'),
+//                         style: ElevatedButton.styleFrom(
+//                           backgroundColor: player2Action == GameAction.defect
+//                               ? Colors.red
+//                               : Colors.grey,
+//                         ),
+//                       ),
+//                     ],
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//         SizedBox(height: 16),
+//         ElevatedButton(
+//           onPressed: player1Action != null && player2Action != null ? _submitActions : null,
+//           child: Text('Submit Round'),
+//           style: ElevatedButton.styleFrom(
+//             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+// class GameHistoryWidget extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final gameState = ref.watch(gameProvider);
+
+//     return Container(
+//       padding: EdgeInsets.all(8),
+//       decoration: BoxDecoration(
+//         color: Colors.grey[50],
+//         border: Border(top: BorderSide(color: Colors.grey[300]!)),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text('Recent Rounds:', style: TextStyle(fontWeight: FontWeight.bold)),
+//           SizedBox(height: 4),
+//           Expanded(
+//             child: ListView.builder(
+//               scrollDirection: Axis.horizontal,
+//               itemCount: gameState.history.length,
+//               itemBuilder: (context, index) {
+//                 final result = gameState.history[index];
+//                 return Container(
+//                   margin: EdgeInsets.only(right: 8),
+//                   padding: EdgeInsets.all(8),
+//                   decoration: BoxDecoration(
+//                     color: Colors.white,
+//                     border: Border.all(color: Colors.grey[300]!),
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Column(
+//                     mainAxisSize: MainAxisSize.min,
+//                     children: [
+//                       Text('R${index + 1}', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+//                       Row(
+//                         mainAxisSize: MainAxisSize.min,
+//                         children: [
+//                           Text(
+//                             result.player1Action == GameAction.cooperate ? '🤝' : '⚔️',
+//                             style: TextStyle(fontSize: 16),
+//                           ),
+//                           Text(' vs ', style: TextStyle(fontSize: 10)),
+//                           Text(
+//                             result.player2Action == GameAction.cooperate ? '🤝' : '⚔️',
+//                             style: TextStyle(fontSize: 16),
+//                           ),
+//                         ],
+//                       ),
+//                       Text(
+//                         '${result.player1Score}-${result.player2Score}',
+//                         style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+//                       ),
+//                     ],
+//                   ),
+//                 );
+//               },
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class GameEndScreen extends ConsumerWidget {
+//   @override
+//   Widget build(BuildContext context, WidgetRef ref) {
+//     final gameState = ref.watch(gameProvider);
+
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Text(
+//             'Game Over!',
+//             style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+//           ),
+//           SizedBox(height: 20),
+//           Text(
+//             gameState.winner == "Tie" ? "It's a Tie!" : "${gameState.winner} Wins!",
+//             style: TextStyle(
+//               fontSize: 24,
+//               color: gameState.winner == "Player 1" 
+//                 ? Colors.blue 
+//                 : gameState.winner == "Tie" 
+//                   ? Colors.grey 
+//                   : Colors.red,
+//             ),
+//           ),
+//           SizedBox(height: 20),
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.grey[100],
+//               borderRadius: BorderRadius.circular(8),
+//             ),
+//             child: Column(
+//               children: [
+//                 Text('Final Scores:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//                 SizedBox(height: 10),
+//                 Row(
+//                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//                   children: [
+//                     Column(
+//                       children: [
+//                         Text('Player 1'),
+//                         Text('${gameState.totalPlayer1Score}', 
+//                             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
+//                       ],
+//                     ),
+//                     Column(
+//                       children: [
+//                         Text(gameState.mode == GameMode.vsComputer ? 'Computer' : 'Player 2'),
+//                         Text('${gameState.totalPlayer2Score}', 
+//                             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.red)),
+//                       ],
+//                     ),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//           ),
+//           SizedBox(height: 30),
+//           Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+//             children: [
+//               ElevatedButton(
+//                 onPressed: () {
+//                   ref.read(gameProvider.notifier).resetGame();
+//                 },
+//                 child: Text('Play Again'),
+//                 style: ElevatedButton.styleFrom(
+//                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+//                 ),
+//               ),
+//               ElevatedButton(
+//                 onPressed: () {
+//                   Navigator.popUntil(context, (route) => route.isFirst);
+//                 },
+//                 child: Text('Main Menu'),
+//                 style: ElevatedButton.styleFrom(
+//                   padding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+//                   backgroundColor: Colors.grey,
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// class StrategyPage extends StatelessWidget {
+//   final List<Map<String, dynamic>> strategies = [
+//     {
+//       'name': 'Tit for Tat',
+//       'description': 'Cooperates first, then copies opponent\'s last move. Simple, forgiving, and highly successful in tournaments.',
+//       'behavior': 'C, then copy opponent\'s previous move',
+//       'strength': 'Simple, nice, retaliatory, forgiving',
+//       'weakness': 'Can get stuck in defection cycles',
+//       'example': 'Round 1: C\nOpponent plays D\nRound 2: D\nOpponent plays C\nRound 3: C',
+//     },
+//     {
+//       'name': 'Always Cooperate (Angel)',
+//       'description': 'Always chooses to cooperate, regardless of opponent\'s actions. Very trusting but vulnerable to exploitation.',
+//       'behavior': 'Always plays C',
+//       'strength': 'Maximizes mutual cooperation',
+//       'weakness': 'Easily exploited by defectors',
+//       'example': 'Round 1: C\nRound 2: C\nRound 3: C\n(Always cooperative)',
+//     },
+//     {
+//       'name': 'Always Defect (Devil)',
+//       'description': 'Always chooses to defect. Exploits cooperative opponents but performs poorly against other defectors.',
+//       'behavior': 'Always plays D',
+//       'strength': 'Exploits cooperative strategies',
+//       'weakness': 'Poor against other defectors',
+//       'example': 'Round 1: D\nRound 2: D\nRound 3: D\n(Always defects)',
+//     },
+//     {
+//       'name': 'Grudger',
+//       'description': 'Cooperates until opponent defects once, then defects forever. Unforgiving but effective against exploiters.',
+//       'behavior': 'C until opponent plays D, then always D',
+//       'strength': 'Punishes defection severely',
+//       'weakness': 'Unforgiving, no second chances',
+//       'example': 'Round 1: C\nRound 2: C\nOpponent plays D\nRound 3: D\nRound 4: D (forever)',
+//     },
+//     {
+//       'name': 'Random',
+//       'description': 'Randomly chooses between cooperation and defection with 50% probability each.',
+//       'behavior': '50% C, 50% D randomly',
+//       'strength': 'Unpredictable',
+//       'weakness': 'No strategic coherence',
+//       'example': 'Round 1: C (random)\nRound 2: D (random)\nRound 3: C (random)',
+//     },
+//     {
+//       'name': 'Pavlov (Win-Stay, Lose-Shift)',
+//       'description': 'Repeats last action if it was rewarding, changes if it wasn\'t. Adapts based on payoff received.',
+//       'behavior': 'Repeat if score ≥ 3, change if score < 3',
+//       'strength': 'Adapts based on success',
+//       'weakness': 'Can be exploited by pattern recognition',
+//       'example': 'Round 1: C, gets 3 points\nRound 2: C (won, so stay)\nGets 0 points\nRound 3: D (lost, so shift)',
+//     },
+//     {
+//       'name': 'Generous Tit for Tat',
+//       'description': 'Like Tit for Tat but occasionally forgives defections to break revenge cycles.',
+//       'behavior': 'Tit for Tat with ~10% forgiveness rate',
+//       'strength': 'Breaks defection cycles',
+//       'weakness': 'Can be exploited by recognizing forgiveness',
+//       'example': 'Opponent plays D\nUsually play D, but 10% chance play C',
+//     },
+//     {
+//       'name': 'Tit for Two Tats',
+//       'description': 'Only retaliates after opponent defects twice in a row. More forgiving than Tit for Tat.',
+//       'behavior': 'D only after opponent plays DD',
+//       'strength': 'Very forgiving, noise-tolerant',
+//       'weakness': 'Can be exploited by alternating CD',
+//       'example': 'Opponent: D, C, D, D\nResponse: C, C, C, D',
+//     },
+//     {
+//       'name': 'Suspicious Tit for Tat',
+//       'description': 'Like Tit for Tat but starts with defection instead of cooperation.',
+//       'behavior': 'D first, then copy opponent',
+//       'strength': 'Protects against initial exploitation',
+//       'weakness': 'Mutual defection if both suspicious',
+//       'example': 'Round 1: D\nOpponent plays C\nRound 2: C\nOpponent plays D\nRound 3: D',
+//     },
+//     {
+//       'name': 'Generous',
+//       'description': 'Cooperates most of the time but occasionally defects randomly to test opponent.',
+//       'behavior': '90% C, 10% D randomly',
+//       'strength': 'Mostly cooperative but not exploitable',
+//       'weakness': 'Random defections can trigger retaliation',
+//       'example': 'Usually cooperates, occasional random defection',
+//     },
+//   ];
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('Strategy Guide'),
+//         backgroundColor: Colors.green[800],
+//       ),
+//       body: ListView.builder(
+//         padding: EdgeInsets.all(16),
+//         itemCount: strategies.length,
+//         itemBuilder: (context, index) {
+//           final strategy = strategies[index];
+//           return Card(
+//             margin: EdgeInsets.symmetric(vertical: 8),
+//             child: ExpansionTile(
+//               title: Text(
+//                 strategy['name'],
+//                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+//               ),
+//               subtitle: Text(
+//                 strategy['description'],
+//                 maxLines: 2,
+//                 overflow: TextOverflow.ellipsis,
+//               ),
+//               children: [
+//                 Padding(
+//                   padding: EdgeInsets.all(16),
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       _buildInfoRow('Behavior:', strategy['behavior']),
+//                       SizedBox(height: 8),
+//                       _buildInfoRow('Strength:', strategy['strength']),
+//                       SizedBox(height: 8),
+//                       _buildInfoRow('Weakness:', strategy['weakness']),
+//                       SizedBox(height: 8),
+//                       _buildInfoRow('Example:', strategy['example']),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           );
+//         },
+//       ),
+//       floatingActionButton: FloatingActionButton.extended(
+//         onPressed: () {
+//           showDialog(
+//             context: context,
+//             builder: (context) => PayoffMatrixDialog(),
+//           );
+//         },
+//         label: Text('Payoff Matrix'),
+//         icon: Icon(Icons.table_chart),
+//         backgroundColor: Colors.blue,
+//       ),
+//     );
+//   }
+
+//   Widget _buildInfoRow(String label, String value) {
+//     return Row(
+//       crossAxisAlignment: CrossAxisAlignment.start,
+//       children: [
+//         Text(
+//           label,
+//           style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue[800]),
+//         ),
+//         SizedBox(width: 8),
+//         Expanded(
+//           child: Text(
+//             value,
+//             style: TextStyle(fontSize: 14),
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+// }
+
+// class HowToPlayScreen extends StatefulWidget {
+//   @override
+//   _HowToPlayScreenState createState() => _HowToPlayScreenState();
+// }
+
+// class _HowToPlayScreenState extends State<HowToPlayScreen> {
+//   final PageController _pageController = PageController();
+//   int _currentPage = 0;
+//   final int _totalPages = 6;
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       appBar: AppBar(
+//         title: Text('How to Play'),
+//         backgroundColor: Colors.orange[800],
+//         actions: [
+//           TextButton(
+//             onPressed: () => Navigator.pop(context),
+//             child: Text('Skip', style: TextStyle(color: Colors.white)),
+//           ),
+//         ],
+//       ),
+//       body: Column(
+//         children: [
+//           // Progress indicator
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: List.generate(_totalPages, (index) {
+//                 return Container(
+//                   margin: EdgeInsets.symmetric(horizontal: 4),
+//                   width: 12,
+//                   height: 12,
+//                   decoration: BoxDecoration(
+//                     shape: BoxShape.circle,
+//                     color: index == _currentPage ? Colors.orange : Colors.grey[300],
+//                   ),
+//                 );
+//               }),
+//             ),
+//           ),
+          
+//           // Page content
+//           Expanded(
+//             child: PageView(
+//               controller: _pageController,
+//               onPageChanged: (page) {
+//                 setState(() {
+//                   _currentPage = page;
+//                 });
+//               },
+//               children: [
+//                 _buildIntroPage(),
+//                 _buildBasicRulesPage(),
+//                 _buildPayoffPage(),
+//                 _buildStrategyIntroPage(),
+//                 _buildGameModesPage(),
+//                 _buildTipsPage(),
+//               ],
+//             ),
+//           ),
+          
+//           // Navigation buttons
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             child: Row(
+//               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//               children: [
+//                 TextButton(
+//                   onPressed: _currentPage > 0 ? () {
+//                     _pageController.previousPage(
+//                       duration: Duration(milliseconds: 300),
+//                       curve: Curves.easeInOut,
+//                     );
+//                   } : null,
+//                   child: Text('Previous'),
+//                 ),
+//                 Text('${_currentPage + 1} of $_totalPages'),
+//                 ElevatedButton(
+//                   onPressed: () {
+//                     if (_currentPage < _totalPages - 1) {
+//                       _pageController.nextPage(
+//                         duration: Duration(milliseconds: 300),
+//                         curve: Curves.easeInOut,
+//                       );
+//                     } else {
+//                       Navigator.pop(context);
+//                     }
+//                   },
+//                   child: Text(_currentPage == _totalPages - 1 ? 'Got It!' : 'Next'),
+//                   style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildIntroPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Icon(Icons.psychology, size: 80, color: Colors.orange),
+//           SizedBox(height: 20),
+//           Text(
+//             'Welcome to the Prisoner\'s Dilemma!',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 20),
+//           Text(
+//             'The Prisoner\'s Dilemma is one of the most famous problems in game theory. It explores the tension between cooperation and self-interest.',
+//             style: TextStyle(fontSize: 16),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.blue[50],
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.blue[200]!),
+//             ),
+//             child: Column(
+//               children: [
+//                 Text(
+//                   '🏛️ The Story',
+//                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                 ),
+//                 SizedBox(height: 10),
+//                 Text(
+//                   'Two prisoners are arrested and held separately. They can either cooperate with each other (stay silent) or defect (betray the other). The outcome depends on what both choose!',
+//                   style: TextStyle(fontSize: 14),
+//                   textAlign: TextAlign.center,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildBasicRulesPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Text(
+//             '🎯 Basic Rules',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           _buildRuleCard(
+//             icon: '🤝',
+//             title: 'Cooperate',
+//             description: 'Work together with your opponent. This shows trust and can lead to mutual benefit.',
+//             color: Colors.green,
+//           ),
+//           SizedBox(height: 20),
+//           _buildRuleCard(
+//             icon: '⚔️',
+//             title: 'Defect',
+//             description: 'Betray your opponent for personal gain. This might get you more points but at their expense.',
+//             color: Colors.red,
+//           ),
+//           SizedBox(height: 30),
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.yellow[50],
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.yellow[300]!),
+//             ),
+//             child: Column(
+//               children: [
+//                 Icon(Icons.lightbulb_outline, color: Colors.orange, size: 30),
+//                 SizedBox(height: 10),
+//                 Text(
+//                   'Key Insight',
+//                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//                 ),
+//                 SizedBox(height: 8),
+//                 Text(
+//                   'Both players choose simultaneously without knowing what the other will do. This creates the dilemma!',
+//                   style: TextStyle(fontSize: 14),
+//                   textAlign: TextAlign.center,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildPayoffPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Text(
+//             '📊 How Scoring Works',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 20),
+//           Text(
+//             'Points are awarded based on both players\' choices:',
+//             style: TextStyle(fontSize: 16),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           _buildOutcomeCard('🤝 🤝', 'Both Cooperate', '3 points each', 
+//               'The "reward" - mutual benefit', Colors.green[100]!),
+//           SizedBox(height: 15),
+//           _buildOutcomeCard('⚔️ ⚔️', 'Both Defect', '1 point each', 
+//               'The "punishment" - mutual loss', Colors.grey[300]!),
+//           SizedBox(height: 15),
+//           _buildOutcomeCard('🤝 ⚔️', 'You Cooperate, Opponent Defects', '0 vs 5 points', 
+//               'You\'re the "sucker"', Colors.red[100]!),
+//           SizedBox(height: 15),
+//           _buildOutcomeCard('⚔️ 🤝', 'You Defect, Opponent Cooperates', '5 vs 0 points', 
+//               'The "temptation" to betray', Colors.orange[100]!),
+//           SizedBox(height: 30),
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.blue[50],
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.blue[200]!),
+//             ),
+//             child: Text(
+//               '🎲 The Dilemma: While mutual cooperation gives good points (3,3), you\'re tempted to defect for even more (5), but risk getting nothing if you both defect (1,1)!',
+//               style: TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+//               textAlign: TextAlign.center,
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildStrategyIntroPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Text(
+//             '🧠 Strategy Matters!',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 20),
+//           Text(
+//             'In repeated games, your strategy determines long-term success:',
+//             style: TextStyle(fontSize: 16),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           _buildStrategyPreviewCard(
+//             'Tit for Tat',
+//             'Start nice, then copy opponent',
+//             '✅ Simple and effective\n❌ Can get stuck in revenge cycles',
+//             Colors.blue[100]!,
+//           ),
+//           SizedBox(height: 15),
+//           _buildStrategyPreviewCard(
+//             'Always Cooperate',
+//             'Trust everyone, always',
+//             '✅ Maximizes mutual cooperation\n❌ Easily exploited',
+//             Colors.green[100]!,
+//           ),
+//           SizedBox(height: 15),
+//           _buildStrategyPreviewCard(
+//             'Grudger',
+//             'Cooperate until betrayed once',
+//             '✅ Punishes defectors\n❌ Never forgives',
+//             Colors.red[100]!,
+//           ),
+//           SizedBox(height: 30),
+//           ElevatedButton.icon(
+//             onPressed: () {
+//               Navigator.pop(context);
+//               Navigator.push(
+//                 context,
+//                 MaterialPageRoute(builder: (context) => StrategyPage()),
+//               );
+//             },
+//             icon: Icon(Icons.library_books),
+//             label: Text('View All Strategies'),
+//             style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildGameModesPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Text(
+//             '🎮 Game Modes',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           _buildModeCard(
+//             icon: Icons.computer,
+//             title: 'VS Computer',
+//             description: 'Play against AI with different strategies. Great for learning and testing your approach!',
+//             features: ['• Choose from 10 AI strategies', '• Different difficulty levels', '• Learn strategy patterns'],
+//             color: Colors.blue,
+//           ),
+//           SizedBox(height: 20),
+//           _buildModeCard(
+//             icon: Icons.people,
+//             title: 'VS Human',
+//             description: 'Play with a friend locally. Both players choose their moves on the same device.',
+//             features: ['• Local multiplayer', '• Secret simultaneous choices', '• Perfect for discussions!'],
+//             color: Colors.purple,
+//           ),
+//           SizedBox(height: 30),
+//           Container(
+//             padding: EdgeInsets.all(16),
+//             decoration: BoxDecoration(
+//               color: Colors.orange[50],
+//               borderRadius: BorderRadius.circular(12),
+//               border: Border.all(color: Colors.orange[200]!),
+//             ),
+//             child: Column(
+//               children: [
+//                 Text(
+//                   '🏆 Win Conditions',
+//                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+//                 ),
+//                 SizedBox(height: 8),
+//                 Text(
+//                   'First to 50 points wins, or highest score after 20 rounds!',
+//                   style: TextStyle(fontSize: 14),
+//                   textAlign: TextAlign.center,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildTipsPage() {
+//     return SingleChildScrollView(
+//       padding: EdgeInsets.all(20),
+//       child: Column(
+//         children: [
+//           Text(
+//             '💡 Pro Tips',
+//             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+//             textAlign: TextAlign.center,
+//           ),
+//           SizedBox(height: 30),
+//           _buildTipCard(
+//             '🤔',
+//             'Think Long-term',
+//             'One betrayal might win a round, but it can cost you the game if your opponent retaliates.',
+//           ),
+//           _buildTipCard(
+//             '🔄',
+//             'Watch Patterns',
+//             'Pay attention to your opponent\'s strategy. Are they copying you? Always defecting? Adjust accordingly!',
+//           ),
+//           _buildTipCard(
+//             '🕊️',
+//             'Be Forgiving',
+//             'Sometimes cooperating after being betrayed can break cycles of mutual defection.',
+//           ),
+//           _buildTipCard(
+//             '⚖️',
+//             'Balance Risk',
+//             'Pure cooperation is exploitable, but pure defection often backfires. Find the right balance!',
+//           ),
+//           _buildTipCard(
+//             '📚',
+//             'Study Strategies',
+//             'Check out the Strategy Guide to understand different approaches and their strengths/weaknesses.',
+//           ),
+//           SizedBox(height: 30),
+//           Container(
+//             width: double.infinity,
+//             padding: EdgeInsets.all(20),
+//             decoration: BoxDecoration(
+//               gradient: LinearGradient(
+//                 colors: [Colors.orange[400]!, Colors.orange[600]!],
+//                 begin: Alignment.topLeft,
+//                 end: Alignment.bottomRight,
+//               ),
+//               borderRadius: BorderRadius.circular(16),
+//             ),
+//             child: Column(
+//               children: [
+//                 Icon(Icons.play_arrow, size: 40, color: Colors.white),
+//                 SizedBox(height: 10),
+//                 Text(
+//                   'Ready to Play?',
+//                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white),
+//                 ),
+//                 SizedBox(height: 8),
+//                 Text(
+//                   'Now you know the rules! Start with VS Computer to practice, then challenge your friends.',
+//                   style: TextStyle(fontSize: 14, color: Colors.white),
+//                   textAlign: TextAlign.center,
+//                 ),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildRuleCard({
+//     required String icon,
+//     required String title,
+//     required String description,
+//     required Color color,
+//   }) {
+//     return Container(
+//       width: double.infinity,
+//       padding: EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: color.withOpacity(0.1),
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: color.withOpacity(0.3)),
+//       ),
+//       child: Column(
+//         children: [
+//           Text(icon, style: TextStyle(fontSize: 40)),
+//           SizedBox(height: 10),
+//           Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//           SizedBox(height: 8),
+//           Text(description, style: TextStyle(fontSize: 14), textAlign: TextAlign.center),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildOutcomeCard(String icons, String title, String points, String description, Color color) {
+//     return Container(
+//       width: double.infinity,
+//       padding: EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: color,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: Colors.grey[300]!),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Text(icons, style: TextStyle(fontSize: 24)),
+//               SizedBox(width: 12),
+//               Expanded(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                     Text(points, style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blue[800])),
+//                   ],
+//                 ),
+//               ),
+//             ],
+//           ),
+//           SizedBox(height: 8),
+//           Text(description, style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic)),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildStrategyPreviewCard(String name, String behavior, String analysis, Color color) {
+//     return Container(
+//       width: double.infinity,
+//       padding: EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: color,
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: Colors.grey[300]!),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text(name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//           SizedBox(height: 4),
+//           Text(behavior, style: TextStyle(fontSize: 14, color: Colors.grey[700])),
+//           SizedBox(height: 8),
+//           Text(analysis, style: TextStyle(fontSize: 12)),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildModeCard({
+//     required IconData icon,
+//     required String title,
+//     required String description,
+//     required List<String> features,
+//     required Color color,
+//   }) {
+//     return Container(
+//       width: double.infinity,
+//       padding: EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: color.withOpacity(0.1),
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: color.withOpacity(0.3)),
+//       ),
+//       child: Column(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Row(
+//             children: [
+//               Icon(icon, color: color, size: 30),
+//               SizedBox(width: 12),
+//               Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+//             ],
+//           ),
+//           SizedBox(height: 12),
+//           Text(description, style: TextStyle(fontSize: 14)),
+//           SizedBox(height: 12),
+//           ...features.map((feature) => Padding(
+//             padding: EdgeInsets.symmetric(vertical: 2),
+//             child: Text(feature, style: TextStyle(fontSize: 12, color: Colors.grey[700])),
+//           )).toList(),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildTipCard(String icon, String title, String description) {
+//     return Container(
+//       margin: EdgeInsets.symmetric(vertical: 8),
+//       padding: EdgeInsets.all(16),
+//       decoration: BoxDecoration(
+//         color: Colors.grey[50],
+//         borderRadius: BorderRadius.circular(12),
+//         border: Border.all(color: Colors.grey[200]!),
+//       ),
+//       child: Row(
+//         crossAxisAlignment: CrossAxisAlignment.start,
+//         children: [
+//           Text(icon, style: TextStyle(fontSize: 24)),
+//           SizedBox(width: 16),
+//           Expanded(
+//             child: Column(
+//               crossAxisAlignment: CrossAxisAlignment.start,
+//               children: [
+//                 Text(title, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+//                 SizedBox(height: 4),
+//                 Text(description, style: TextStyle(fontSize: 14)),
+//               ],
+//             ),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
+// // Add this class before the existing PayoffMatrixDialog class
+//   @override
+//   Widget build(BuildContext context) {
+//     return AlertDialog(
+//       title: Text('Payoff Matrix'),
+//       content: Container(
+//         width: 300,
+//         child: Column(
+//           mainAxisSize: MainAxisSize.min,
+//           children: [
+//             Text(
+//               'Points earned for each outcome:',
+//               style: TextStyle(fontWeight: FontWeight.bold),
+//             ),
+//             SizedBox(height: 16),
+//             Table(
+//               border: TableBorder.all(),
+//               children: [
+//                 TableRow(
+//                   children: [
+//                     _buildTableCell('', isHeader: true),
+//                     _buildTableCell('Opponent\nCooperates', isHeader: true),
+//                     _buildTableCell('Opponent\nDefects', isHeader: true),
+//                   ],
+//                 ),
+//                 TableRow(
+//                   children: [
+//                     _buildTableCell('You\nCooperate', isHeader: true),
+//                     _buildTableCell('3, 3\n🤝🤝\nReward', color: Colors.green[100]),
+//                     _buildTableCell('0, 5\n🤝⚔️\nSucker', color: Colors.red[100]),
+//                   ],
+//                 ),
+//                 TableRow(
+//                   children: [
+//                     _buildTableCell('You\nDefect', isHeader: true),
+//                     _buildTableCell('5, 0\n⚔️🤝\nTemptation', color: Colors.orange[100]),
+//                     _buildTableCell('1, 1\n⚔️⚔️\nPunishment', color: Colors.grey[200]),
+//                   ],
+//                 ),
+//               ],
+//             ),
+//             SizedBox(height: 16),
+//             Text(
+//               'Format: (Your points, Opponent\'s points)',
+//               style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+//             ),
+//             SizedBox(height: 8),
+//             Text(
+//               'Temptation > Reward > Punishment > Sucker\n5 > 3 > 1 > 0',
+//               style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+//             ),
+//           ],
+//         ),
+//       ),
+//       actions: [
+//         TextButton(
+//           onPressed: () => Navigator.of(context).pop(),
+//           child: Text('Close'),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildTableCell(String text, {bool isHeader = false, Color? color}) {
+//     return Container(
+//       padding: EdgeInsets.all(8),
+//       color: color,
+//       child: Text(
+//         text,
+//         textAlign: TextAlign.center,
+//         style: TextStyle(
+//           fontWeight: isHeader ? FontWeight.bold : FontWeight.normal,
+//           fontSize: isHeader ? 12 : 14,
+//         ),
+//       ),
+//     );
+//   }
+
+
+// // Additional Strategy Implementations for completeness
+// class GenerousTitForTatStrategy implements Strategy {
+//   final Random _random = Random();
+  
+//   @override
+//   String get name => "Generous Tit for Tat";
+  
+//   @override
+//   String get description => "Like Tit for Tat but occasionally forgives defections to break revenge cycles.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     if (history.isEmpty) return GameAction.cooperate;
+    
+//     final lastResult = history.last;
+//     final opponentLastAction = isPlayer1 ? lastResult.player2Action : lastResult.player1Action;
+    
+//     // If opponent cooperated, cooperate
+//     if (opponentLastAction == GameAction.cooperate) {
+//       return GameAction.cooperate;
+//     }
+    
+//     // If opponent defected, usually defect but sometimes forgive (10% chance)
+//     return _random.nextDouble() < 0.1 ? GameAction.cooperate : GameAction.defect;
+//   }
+// }
+
+// class TitForTwoTatsStrategy implements Strategy {
+//   @override
+//   String get name => "Tit for Two Tats";
+  
+//   @override
+//   String get description => "Only retaliates after opponent defects twice in a row. More forgiving than Tit for Tat.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     if (history.length < 2) return GameAction.cooperate;
+    
+//     final lastResult = history.last;
+//     final secondLastResult = history[history.length - 2];
+    
+//     final opponentLastAction = isPlayer1 ? lastResult.player2Action : lastResult.player1Action;
+//     final opponentSecondLastAction = isPlayer1 ? secondLastResult.player2Action : secondLastResult.player1Action;
+    
+//     // Only defect if opponent defected in both of the last two rounds
+//     if (opponentLastAction == GameAction.defect && opponentSecondLastAction == GameAction.defect) {
+//       return GameAction.defect;
+//     }
+    
+//     return GameAction.cooperate;
+//   }
+// }
+
+// class SuspiciousTitForTatStrategy implements Strategy {
+//   @override
+//   String get name => "Suspicious Tit for Tat";
+  
+//   @override
+//   String get description => "Like Tit for Tat but starts with defection instead of cooperation.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     if (history.isEmpty) return GameAction.defect; // Start with defection
+    
+//     final lastResult = history.last;
+//     final opponentLastAction = isPlayer1 ? lastResult.player2Action : lastResult.player1Action;
+//     return opponentLastAction; // Copy opponent's last move
+//   }
+// }
+
+// class GenerousStrategy implements Strategy {
+//   final Random _random = Random();
+  
+//   @override
+//   String get name => "Generous";
+  
+//   @override
+//   String get description => "Cooperates most of the time but occasionally defects randomly to test opponent.";
+
+//   @override
+//   GameAction getNextAction(List<GameResult> history, bool isPlayer1) {
+//     // 90% cooperation, 10% defection
+//     return _random.nextDouble() < 0.9 ? GameAction.cooperate : GameAction.defect;
+//   }
+// }
