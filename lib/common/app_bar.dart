@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:the_prisoners_dilema/common/circular_app_icon.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String text;
@@ -17,17 +18,27 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: Text(
-        text,
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: textColor ?? Colors.white,
-        ),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          CircularAppIcon(size: 40),
+          SizedBox(width: 10),
+          Text(
+            text,
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: textColor ?? Colors.white,
+            ),
+          ),
+        ],
       ),
+      centerTitle: true,
+      clipBehavior: Clip.hardEdge,
       backgroundColor: backgroundColor ?? Colors.blue[800],
       scrolledUnderElevation: 4.0,
-      centerTitle: true,
       elevation: 4,
       shadowColor: Colors.black54,
       actions: actions,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_prisoners_dilema/common/app_bar.dart';
 import 'package:the_prisoners_dilema/view/how_to_play_screen.dart';
 
+import '../common/circular_app_icon.dart';
 import '../common/enums.dart';
 import '../repository/game_notifier.dart';
 import '../widgets/stick_figure_fight.dart';
@@ -16,7 +17,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: CustomAppBar(text: "The Classic Prisoner's Dilemma"),
+      appBar: CustomAppBar(text: "The Classic - Prisoner's Dilemma"),
       body: Stack(
         children: [
           // Animated Background with moving Particles and Gradients
@@ -35,7 +36,7 @@ class HomeScreen extends ConsumerWidget {
               curve: Curves.easeInOutCubicEmphasized,
               color: ref.watch(gameProvider).gameEnded
                   ? Colors.grey
-                  : Colors.blueGrey.shade50.withOpacity(0.15),
+                  : Colors.black38,
             ),
           ),
           StickFigureFight(),
@@ -45,14 +46,58 @@ class HomeScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                CircularAppIcon(size: 60),
+                SizedBox(width: 10),
                 Text(
-                  "🤝 Prisoner's Dilemma ⚔️",
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+                  "The Prisoner's Dilemma",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(2, 2),
+                        blurRadius: 3,
+                        color: Colors.black45,
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: 20),
+
+                // Description Text to be organized in a block
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 30.0),
+                  child: Text(
+                    "🤝Cooperation vs Defection ⚔️ \n A classic game theory scenario \n that illustrates the tension between \n individual rationality Vs collective welfare.\n",
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(1, 1),
+                          blurRadius: 2,
+                          color: Colors.black26,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
                 Text(
                   'Choose your game mode:',
-                  style: TextStyle(fontSize: 18, fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white70,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                        color: Colors.black26,
+                      ),
+                    ],
+                  ),
                 ),
                 SizedBox(height: 30),
                 ElevatedButton.icon(

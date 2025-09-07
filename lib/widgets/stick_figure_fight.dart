@@ -3,8 +3,10 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 class StickFigureFight extends StatefulWidget {
+  const StickFigureFight({super.key});
+
   @override
-  _StickFigureFightState createState() => _StickFigureFightState();
+  State<StickFigureFight> createState() => _StickFigureFightState();
 }
 
 class _StickFigureFightState extends State<StickFigureFight>
@@ -28,10 +30,7 @@ class _StickFigureFightState extends State<StickFigureFight>
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: FightPainter(_controller),
-      size: Size.infinite,
-    );
+    return CustomPaint(painter: FightPainter(_controller), size: Size.infinite);
   }
 }
 
@@ -57,8 +56,14 @@ class FightPainter extends CustomPainter {
     drawStickFigure(canvas, paint, figure2X, figure2Y, animation.value, false);
   }
 
-  void drawStickFigure(Canvas canvas, Paint paint, double x, double y,
-      double animationValue, bool isFigure1) {
+  void drawStickFigure(
+    Canvas canvas,
+    Paint paint,
+    double x,
+    double y,
+    double animationValue,
+    bool isFigure1,
+  ) {
     // Head
     canvas.drawCircle(Offset(x, y - 50), 20, paint);
 
@@ -71,7 +76,10 @@ class FightPainter extends CustomPainter {
     if (isFigure1) {
       // Right Arm (attacking)
       canvas.drawLine(
-          Offset(x, armY), Offset(x + 30, armY - 30 * armAngle), paint);
+        Offset(x, armY),
+        Offset(x + 30, armY - 30 * armAngle),
+        paint,
+      );
       // Sword
       drawSword(canvas, paint, x + 30, armY - 30 * armAngle);
       // Left Arm (defending)
@@ -79,7 +87,10 @@ class FightPainter extends CustomPainter {
     } else {
       // Left Arm (attacking)
       canvas.drawLine(
-          Offset(x, armY), Offset(x - 30, armY - 30 * armAngle), paint);
+        Offset(x, armY),
+        Offset(x - 30, armY - 30 * armAngle),
+        paint,
+      );
       // Sword
       drawSword(canvas, paint, x - 30, armY - 30 * armAngle);
       // Right Arm (defending)

@@ -9,13 +9,22 @@ class GameNotifier extends StateNotifier<GameState> {
   GameNotifier() : super(GameState());
 
   void setGameMode(GameMode mode, StrategyType? strategy) {
-    state = GameState(mode: mode, computerStrategy: strategy);
+    state = GameState(
+      mode: mode,
+      computerStrategy: strategy,
+      isMuted: state.isMuted,
+    );
+  }
+
+  void toggleMute() {
+    state = state.copyWith(isMuted: !state.isMuted);
   }
 
   void resetGame() {
     state = GameState(
       mode: state.mode,
       computerStrategy: state.computerStrategy,
+      isMuted: state.isMuted,
     );
   }
 
@@ -33,17 +42,29 @@ class GameNotifier extends StateNotifier<GameState> {
         return RandomStrategy();
       case StrategyType.pavlov:
         return PavlovStrategy();
-      default:
-        return TitForTatStrategy();
+      case StrategyType.generousTitForTat:
+        return GenerousTitForTatStrategy();
+      case StrategyType.titForTwoTats:
+        return TitForTwoTatsStrategy();
+      case StrategyType.suspicious:
+        return SuspiciousTitForTatStrategy();
+      case StrategyType.generous:
+        return GenerousStrategy();
     }
   }
 
-  Map<String, int> _calculatePayoff(GameAction player1Action, GameAction player2Action) {
-    if (player1Action == GameAction.cooperate && player2Action == GameAction.cooperate) {
+  Map<String, int> _calculatePayoff(
+    GameAction player1Action,
+    GameAction player2Action,
+  ) {
+    if (player1Action == GameAction.cooperate &&
+        player2Action == GameAction.cooperate) {
       return {'player1': 3, 'player2': 3}; // Mutual cooperation
-    } else if (player1Action == GameAction.defect && player2Action == GameAction.defect) {
+    } else if (player1Action == GameAction.defect &&
+        player2Action == GameAction.defect) {
       return {'player1': 1, 'player2': 1}; // Mutual defection
-    } else if (player1Action == GameAction.cooperate && player2Action == GameAction.defect) {
+    } else if (player1Action == GameAction.cooperate &&
+        player2Action == GameAction.defect) {
       return {'player1': 0, 'player2': 5}; // Player 1 exploited
     } else {
       return {'player1': 5, 'player2': 0}; // Player 2 exploited
@@ -76,7 +97,7 @@ class GameNotifier extends StateNotifier<GameState> {
     // Check win condition (first to 50 points or after 20 rounds)
     bool gameEnded = false;
     String? winner;
-    
+
     if (newPlayer1Total >= 50 || newPlayer2Total >= 50 || newRound >= 20) {
       gameEnded = true;
       if (newPlayer1Total > newPlayer2Total) {

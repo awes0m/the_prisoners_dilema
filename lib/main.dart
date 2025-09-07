@@ -1,10 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pwa_install/pwa_install.dart';
 
 import 'view/home_screen.dart';
 
 // Main App
 void main() {
+  PWAInstall().setup(
+    installCallback: () {
+      debugPrint('APP INSTALLED!');
+    },
+  );
   runApp(ProviderScope(child: PrisonersDilemmaApp()));
 }
 

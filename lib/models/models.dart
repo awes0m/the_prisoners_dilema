@@ -1,6 +1,5 @@
 // Game Models
 
-
 import '../common/enums.dart';
 
 class GameResult {
@@ -26,6 +25,7 @@ class GameState {
   final int currentRound;
   final bool gameEnded;
   final String? winner;
+  final bool isMuted; // UX: mute sounds
 
   GameState({
     this.history = const [],
@@ -36,6 +36,7 @@ class GameState {
     this.currentRound = 0,
     this.gameEnded = false,
     this.winner,
+    this.isMuted = false,
   });
 
   GameState copyWith({
@@ -47,6 +48,7 @@ class GameState {
     int? currentRound,
     bool? gameEnded,
     String? winner,
+    bool? isMuted,
   }) {
     return GameState(
       history: history ?? this.history,
@@ -57,6 +59,7 @@ class GameState {
       currentRound: currentRound ?? this.currentRound,
       gameEnded: gameEnded ?? this.gameEnded,
       winner: winner ?? this.winner,
+      isMuted: isMuted ?? this.isMuted,
     );
   }
 }
