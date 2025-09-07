@@ -28,7 +28,6 @@ class GameHistoryWidget extends ConsumerWidget {
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             controller: scrollController,
-            shrinkWrap: true,
             itemCount: gameState.history.length,
             itemBuilder: (context, index) {
               final result = gameState.history[index];
