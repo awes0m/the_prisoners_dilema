@@ -39,7 +39,6 @@ class HomeScreen extends ConsumerWidget {
                   : Colors.black38,
             ),
           ),
-          StickFigureFight(),
 
           Center(
             child: Column(
