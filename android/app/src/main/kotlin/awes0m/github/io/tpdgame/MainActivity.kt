@@ -1,4 +1,4 @@
-package awes0m.github.io.the_prisoners_dilema
+package awes0m.github.io.tpdgame
 
 import io.flutter.embedding.android.FlutterActivity
 

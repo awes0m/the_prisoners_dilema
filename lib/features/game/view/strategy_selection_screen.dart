@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:the_prisoners_dilema/common/app_bar.dart';
 
+import '../../../common/common.dart';
 import '../../../core/enums.dart';
 import '../../../controller/game_notifier.dart';
 import '../../../core/strategy.dart';

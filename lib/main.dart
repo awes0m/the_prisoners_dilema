@@ -29,6 +29,8 @@ class PrisonersDilemmaApp extends StatelessWidget {
       title: 'The Classic Prisoner\'s Dilemma',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        fontFamily: 'Helvetica',
+        fontFamilyFallback: ['Roboto', 'Arial', 'sans-serif'],
         visualDensity: VisualDensity.adaptivePlatformDensity,
         // Performance: Reduce animation durations globally
         pageTransitionsTheme: const PageTransitionsTheme(
@@ -42,4 +44,3 @@ class PrisonersDilemmaApp extends StatelessWidget {
     );
   }
 }
-

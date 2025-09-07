@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:the_prisoners_dilema/common/circular_app_icon.dart';
+
+import 'circular_app_icon.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String text;

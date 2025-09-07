@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:the_prisoners_dilema/common/app_bar.dart';
-import 'package:the_prisoners_dilema/features/info/view/how_to_play_screen.dart';
 
-import '../../../common/circular_app_icon.dart';
-import '../../../core/enums.dart';
+// core and common imports
+import '../../../common/common.dart';
+import '../../../core/core.dart';
+
+// game imports
 import '../../../controller/game_notifier.dart';
 import '../../game/widgets/stick_figure_fight.dart';
 import '../../game/view/game_screen.dart';
+import '../../info/view/how_to_play_screen.dart';
 import '../../info/view/strategy_guide_screen.dart';
 import '../../game/view/strategy_selection_screen.dart';
+
+// widgets
 import 'widgets/background.dart';
 
 class HomeScreen extends ConsumerWidget {

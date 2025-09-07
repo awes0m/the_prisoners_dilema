@@ -249,7 +249,7 @@ class _StickFigureState extends State<StickFigure>
             boxShadow: [
               if (glowColor != Colors.transparent)
                 BoxShadow(
-                  color: glowColor.withOpacity(0.35),
+                  color: glowColor.withValues(alpha: 0.35),
                   blurRadius: 18,
                   spreadRadius: 4,
                 ),

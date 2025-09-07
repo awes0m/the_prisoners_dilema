@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "awes0m.github.io" "\0"
-            VALUE "FileDescription", "the_prisoners_dilema" "\0"
+            VALUE "FileDescription", "tpdgame" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "the_prisoners_dilema" "\0"
+            VALUE "InternalName", "tpdgame" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2025 awes0m.github.io. All rights reserved." "\0"
-            VALUE "OriginalFilename", "the_prisoners_dilema.exe" "\0"
-            VALUE "ProductName", "the_prisoners_dilema" "\0"
+            VALUE "OriginalFilename", "tpdgame.exe" "\0"
+            VALUE "ProductName", "tpdgame" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

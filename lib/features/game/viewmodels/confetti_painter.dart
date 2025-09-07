@@ -42,8 +42,8 @@ class ConfettiPainter extends CustomPainter {
       final y = -50 + fall + (i % 7) * 12.0;
       final x = startXBias + (i % 5 - 2) * 10.0;
 
-      paint.color = colors[i % colors.length].withOpacity(
-        1 - (progress * 0.25),
+      paint.color = colors[i % colors.length].withValues(
+        alpha: 1 - (progress * 0.25),
       );
       final w = 4.0 + (i % 3) * 2.0;
       final h = 8.0 + (i % 4) * 2.0;

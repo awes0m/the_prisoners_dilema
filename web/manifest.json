@@ -1,9 +1,9 @@
 {
-    "name": "the_prisoners_dilema",
-    "short_name": "the_prisoners_dilema",
+    "name": "tpdgame",
+    "short_name": "tpdgame",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#fffff",
+    "background_color": "#0175C2",
     "theme_color": "#0175C2",
     "description": "A new Flutter project.",
     "orientation": "portrait-primary",
