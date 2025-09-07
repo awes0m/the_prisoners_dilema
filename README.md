@@ -12,7 +12,7 @@ A comprehensive Flutter application implementing the classic Prisoner's Dilemma 
 
 ### [Play game 🎮!](awes0m.github.io/the_prisoners_dilema)
 
-### [Download for android](https://github.com/awes0m/tpdgame/blob/main/release/)
+### [Download for android](https://github.com/awes0m/tpdgame/tree/main/release)
 
 ## Structure
 
