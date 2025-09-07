@@ -238,7 +238,9 @@ class _SimpleAnimatedPrisonerState extends State<SimpleAnimatedPrisoner>
             boxShadow: glowColor != Colors.transparent
                 ? [
                     BoxShadow(
-                      color: glowColor.withOpacity(0.4 * _glowAnimation.value),
+                      color: glowColor.withValues(
+                        alpha: 0.4 * _glowAnimation.value,
+                      ),
                       blurRadius: 20,
                       spreadRadius: 6,
                     ),
@@ -305,7 +307,7 @@ class AnimatedPrisonerPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()
+    Paint()
       ..color = color
       ..strokeWidth = 4
       ..style = PaintingStyle.stroke;
@@ -314,7 +316,7 @@ class AnimatedPrisonerPainter extends CustomPainter {
 
     // Prison uniform body (filled rectangle)
     final uniformPaint = Paint()
-      ..color = color.withValues(alpha:0.3)
+      ..color = color.withValues(alpha: 0.3)
       ..style = PaintingStyle.fill;
 
     final uniformRect = RRect.fromRectAndRadius(
@@ -329,7 +331,7 @@ class AnimatedPrisonerPainter extends CustomPainter {
 
     // Prison stripes
     final stripePaint = Paint()
-      ..color = Colors.white.withOpacity(0.6)
+      ..color = Colors.white.withValues(alpha: 0.6)
       ..strokeWidth = 2;
 
     for (int i = 0; i < 4; i++) {
@@ -352,7 +354,7 @@ class AnimatedPrisonerPainter extends CustomPainter {
 
     // Prison cap
     final capPaint = Paint()
-      ..color = color.withOpacity(0.8)
+      ..color = color.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
     canvas.drawArc(
       Rect.fromCircle(center: headCenter, radius: 18),
