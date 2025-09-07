@@ -53,6 +53,7 @@ class _EnhancedPrisonerAreaState extends ConsumerState<EnhancedPrisonerArea> {
     return ConstrainedBox(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.5,
+        minHeight: MediaQuery.of(context).size.height * 0.5,
       ),
       child: Stack(
         children: [

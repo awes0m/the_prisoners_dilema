@@ -167,6 +167,8 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                         // Enhanced Prisoner Area with Animations
                         const Expanded(
                           child: SingleChildScrollView(
+                            physics: BouncingScrollPhysics(),
+                            primary: true,
                             child: EnhancedPrisonerArea(),
                           ),
                         ),
