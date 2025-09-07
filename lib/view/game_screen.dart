@@ -35,13 +35,20 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final gameState = ref.watch(gameProvider);
+    // Performance: Watch only specific parts of state that affect this widget
+    final currentRound = ref.watch(gameProvider.select((state) => state.currentRound));
+    final gameEnded = ref.watch(gameProvider.select((state) => state.gameEnded));
+    final isMuted = ref.watch(gameProvider.select((state) => state.isMuted));
+    final mode = ref.watch(gameProvider.select((state) => state.mode));
+    final totalPlayer1Score = ref.watch(gameProvider.select((state) => state.totalPlayer1Score));
+    final totalPlayer2Score = ref.watch(gameProvider.select((state) => state.totalPlayer2Score));
+    final history = ref.watch(gameProvider.select((state) => state.history));
 
     // Listen for game end to play victory sound (must be inside build for Riverpod)
-    ref.listen(gameProvider, (previous, next) async {
-      final wasEnded = previous?.gameEnded ?? false;
-      if (!wasEnded && next.gameEnded) {
-        if (!next.isMuted) {
+    ref.listen(gameProvider.select((state) => state.gameEnded), (previous, gameEnded) async {
+      final wasEnded = previous ?? false;
+      if (!wasEnded && gameEnded) {
+        if (!isMuted) {
           try {
             await _endSfx.stop();
             await _endSfx.play(AssetSource('sfx/game_complete.wav'));
@@ -54,14 +61,14 @@ class _GameScreenState extends ConsumerState<GameScreen> {
 
     return Scaffold(
       appBar: CustomAppBar(
-        text: 'Round ${gameState.currentRound + 1}',
+        text: 'Round ${currentRound + 1}',
         backgroundColor: Colors.blue[800],
         actions: [
           TextButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => HowToPlayScreen()),
+                MaterialPageRoute(builder: (context) => const HowToPlayScreen()),
               );
             },
             child: const Text(
@@ -71,10 +78,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
           IconButton(
             icon: Icon(
-              gameState.isMuted ? Icons.volume_off : Icons.volume_up,
+              isMuted ? Icons.volume_off : Icons.volume_up,
               color: Colors.white,
             ),
-            tooltip: gameState.isMuted ? 'Unmute' : 'Mute',
+            tooltip: isMuted ? 'Unmute' : 'Mute',
             onPressed: () {
               ref.read(gameProvider.notifier).toggleMute();
             },
@@ -125,7 +132,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
             duration: const Duration(milliseconds: 400),
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeInCubic,
-            child: gameState.gameEnded
+            child: gameEnded
                 ? Stack(
                     key: const ValueKey('end'),
                     children: const [
@@ -137,79 +144,36 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                     key: const ValueKey('gameColumn'),
                     children: [
                       // Score Display
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(16),
-                        color: Colors.grey[100],
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            Column(
-                              children: [
-                                const Text(
-                                  'Player 1',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '${gameState.totalPlayer1Score}',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Column(
-                              children: [
-                                Text(
-                                  gameState.mode == GameMode.vsComputer
-                                      ? 'Computer'
-                                      : 'Player 2',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '${gameState.totalPlayer2Score}',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    color: Colors.red,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
+                      _ScoreDisplay(
+                        totalPlayer1Score: totalPlayer1Score,
+                        totalPlayer2Score: totalPlayer2Score,
+                        mode: mode,
                       ),
 
                       // Stick Figures and Animation Area
                       const Expanded(child: StickFigureArea()),
 
                       // Action Buttons
-                      if (!gameState.gameEnded)
+                      if (!gameEnded)
                         Container(
                           padding: const EdgeInsets.all(16),
-                          child: gameState.mode == GameMode.vsHuman
+                          child: mode == GameMode.vsHuman
                               ? const TwoPlayerControls()
                               : const SinglePlayerControls(),
                         ),
 
                       // History
-                      if (gameState.history.isNotEmpty)
+                      if (history.isNotEmpty)
                         const SizedBox(height: 120, child: GameHistoryWidget()),
                     ],
                   ),
           ),
           // Confetti layer shown when game ends
-          if (gameState.gameEnded)
+          if (gameEnded)
             _GameEndConfetti(
-              winner: gameState.totalPlayer1Score == gameState.totalPlayer2Score
+              winner: totalPlayer1Score == totalPlayer2Score
                   ? _Winner.tie
-                  : (gameState.totalPlayer1Score > gameState.totalPlayer2Score
+                  : (totalPlayer1Score > totalPlayer2Score
                         ? _Winner.p1
                         : _Winner.p2),
             ),
@@ -329,4 +293,67 @@ class _ConfettiPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _ConfettiPainter oldDelegate) =>
       oldDelegate.progress != progress || oldDelegate.winner != winner;
+}
+
+// Performance: Separate score display to avoid unnecessary rebuilds
+class _ScoreDisplay extends StatelessWidget {
+  final int totalPlayer1Score;
+  final int totalPlayer2Score;
+  final GameMode mode;
+
+  const _ScoreDisplay({
+    required this.totalPlayer1Score,
+    required this.totalPlayer2Score,
+    required this.mode,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      color: Colors.grey[100],
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          Column(
+            children: [
+              const Text(
+                'Player 1',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$totalPlayer1Score',
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
+          Column(
+            children: [
+              Text(
+                mode == GameMode.vsComputer ? 'Computer' : 'Player 2',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$totalPlayer2Score',
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

@@ -53,22 +53,20 @@ class GameNotifier extends StateNotifier<GameState> {
     }
   }
 
+  // Performance: Use const map for faster lookups
+  static const Map<String, Map<String, int>> _payoffMatrix = {
+    'cooperate_cooperate': {'player1': 3, 'player2': 3},
+    'defect_defect': {'player1': 1, 'player2': 1},
+    'cooperate_defect': {'player1': 0, 'player2': 5},
+    'defect_cooperate': {'player1': 5, 'player2': 0},
+  };
+
   Map<String, int> _calculatePayoff(
     GameAction player1Action,
     GameAction player2Action,
   ) {
-    if (player1Action == GameAction.cooperate &&
-        player2Action == GameAction.cooperate) {
-      return {'player1': 3, 'player2': 3}; // Mutual cooperation
-    } else if (player1Action == GameAction.defect &&
-        player2Action == GameAction.defect) {
-      return {'player1': 1, 'player2': 1}; // Mutual defection
-    } else if (player1Action == GameAction.cooperate &&
-        player2Action == GameAction.defect) {
-      return {'player1': 0, 'player2': 5}; // Player 1 exploited
-    } else {
-      return {'player1': 5, 'player2': 0}; // Player 2 exploited
-    }
+    final key = '${player1Action.name}_${player2Action.name}';
+    return _payoffMatrix[key] ?? {'player1': 0, 'player2': 0};
   }
 
   void playRound(GameAction player1Action, [GameAction? player2Action]) {

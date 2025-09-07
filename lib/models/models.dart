@@ -8,12 +8,30 @@ class GameResult {
   final GameAction player1Action;
   final GameAction player2Action;
 
-  GameResult({
+  const GameResult({
     required this.player1Score,
     required this.player2Score,
     required this.player1Action,
     required this.player2Action,
   });
+
+  // Performance: Add equality and hashCode for better caching
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GameResult &&
+          runtimeType == other.runtimeType &&
+          player1Score == other.player1Score &&
+          player2Score == other.player2Score &&
+          player1Action == other.player1Action &&
+          player2Action == other.player2Action;
+
+  @override
+  int get hashCode =>
+      player1Score.hashCode ^
+      player2Score.hashCode ^
+      player1Action.hashCode ^
+      player2Action.hashCode;
 }
 
 class GameState {

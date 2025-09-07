@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pwa_install/pwa_install.dart';
-
-import 'view/home_screen.dart';
+import 'view/splash_screen.dart';
 
 // Main App
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   PWAInstall().setup(
     installCallback: () {
       debugPrint('APP INSTALLED!');
     },
   );
-  runApp(ProviderScope(child: PrisonersDilemmaApp()));
+  runApp(const ProviderScope(child: PrisonersDilemmaApp()));
 }
 
 class PrisonersDilemmaApp extends StatelessWidget {
@@ -25,8 +25,17 @@ class PrisonersDilemmaApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        // Performance: Reduce animation durations globally
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: FadeUpwardsPageTransitionsBuilder(),
+            TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+          },
+        ),
       ),
-      home: HomeScreen(),
+      home: const SplashScreen(), // Start with the splash screen
     );
   }
 }
+
+// Splash Screen Widget

@@ -5,21 +5,30 @@ import 'package:audioplayers/audioplayers.dart';
 import '../common/enums.dart';
 import '../repository/game_notifier.dart';
 
-// Respect mute toggle
-bool _shouldPlay(WidgetRef ref) => !ref.read(gameProvider).isMuted;
+// Performance: Create a singleton audio manager
+class _AudioManager {
+  static final _instance = _AudioManager._internal();
+  factory _AudioManager() => _instance;
+  _AudioManager._internal();
 
-// Shared audio player for short SFX
-final AudioPlayer _sfx = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
+  final AudioPlayer _sfx = AudioPlayer()..setReleaseMode(ReleaseMode.stop);
 
-Future<void> _playSfx(String assetPath) async {
-  try {
-    // Avoid overlapping sounds
-    await _sfx.stop();
-    await _sfx.play(AssetSource(assetPath));
-  } catch (_) {
-    // Swallow errors; non-critical UX feature
+  Future<void> playSfx(String assetPath, bool isMuted) async {
+    if (isMuted) return;
+    try {
+      await _sfx.stop();
+      await _sfx.play(AssetSource(assetPath));
+    } catch (_) {
+      // Swallow errors; non-critical UX feature
+    }
+  }
+
+  void dispose() {
+    _sfx.dispose();
   }
 }
+
+final _audioManager = _AudioManager();
 
 class StickFigureArea extends ConsumerWidget {
   const StickFigureArea({super.key});
@@ -41,31 +50,21 @@ class StickFigureArea extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           // Player 1 Stick Figure
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              StickFigure(
-                isPlayer1: true,
-                lastAction: hasRound ? last!.player1Action : null,
-                outcome: !hasRound
-                    ? RoundOutcome.none
-                    : (p1 > p2
-                          ? RoundOutcome.win
-                          : (p1 < p2 ? RoundOutcome.lose : RoundOutcome.tie)),
-                isLeading:
-                    gameState.totalPlayer1Score > gameState.totalPlayer2Score,
-                bothDefected: hasRound
-                    ? (last!.player1Action == GameAction.defect &&
-                          last.player2Action == GameAction.defect)
-                    : false,
-                isMuted: gameState.isMuted,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                'Player 1',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-            ],
+          StickFigure(
+            isPlayer1: true,
+            lastAction: hasRound ? last!.player1Action : null,
+            outcome: !hasRound
+                ? RoundOutcome.none
+                : (p1 > p2
+                      ? RoundOutcome.win
+                      : (p1 < p2 ? RoundOutcome.lose : RoundOutcome.tie)),
+            isLeading:
+                gameState.totalPlayer1Score > gameState.totalPlayer2Score,
+            bothDefected: hasRound
+                ? (last!.player1Action == GameAction.defect &&
+                      last.player2Action == GameAction.defect)
+                : false,
+            isMuted: gameState.isMuted,
           ),
 
           // VS Text with subtle breathing animation
@@ -91,34 +90,21 @@ class StickFigureArea extends ConsumerWidget {
           ),
 
           // Player 2/Computer Stick Figure
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              StickFigure(
-                isPlayer1: false,
-                lastAction: hasRound ? last!.player2Action : null,
-                outcome: !hasRound
-                    ? RoundOutcome.none
-                    : (p2 > p1
-                          ? RoundOutcome.win
-                          : (p2 < p1 ? RoundOutcome.lose : RoundOutcome.tie)),
-                isLeading:
-                    gameState.totalPlayer2Score > gameState.totalPlayer1Score,
-                bothDefected: hasRound
-                    ? (last!.player1Action == GameAction.defect &&
-                          last.player2Action == GameAction.defect)
-                    : false,
-                isMuted: gameState.isMuted,
-              ),
-              const SizedBox(height: 10),
-              Text(
-                gameState.mode == GameMode.vsComputer ? 'Computer' : 'Player 2',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+          StickFigure(
+            isPlayer1: false,
+            lastAction: hasRound ? last!.player2Action : null,
+            outcome: !hasRound
+                ? RoundOutcome.none
+                : (p2 > p1
+                      ? RoundOutcome.win
+                      : (p2 < p1 ? RoundOutcome.lose : RoundOutcome.tie)),
+            isLeading:
+                gameState.totalPlayer2Score > gameState.totalPlayer1Score,
+            bothDefected: hasRound
+                ? (last!.player1Action == GameAction.defect &&
+                      last.player2Action == GameAction.defect)
+                : false,
+            isMuted: gameState.isMuted,
           ),
         ],
       ),
@@ -188,16 +174,12 @@ class _StickFigureState extends State<StickFigure>
         pulseController
           ..reset()
           ..forward();
-        if (!widget.isMuted) {
-          _playSfx('sfx/chime.mp3');
-        }
+        _audioManager.playSfx('sfx/chime.mp3', widget.isMuted);
       } else if (widget.lastAction == GameAction.defect) {
         shakeController
           ..reset()
           ..forward();
-        if (!widget.isMuted) {
-          _playSfx('sfx/disagree.wav');
-        }
+        _audioManager.playSfx('sfx/disagree.wav', widget.isMuted);
       }
       // Emoji reaction always triggers on new action
       emojiController

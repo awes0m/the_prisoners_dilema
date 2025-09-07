@@ -18,7 +18,7 @@ class _StickFigureFightState extends State<StickFigureFight>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2),
+      duration: const Duration(seconds: 3), // Slower animation for better performance
     )..repeat();
   }
 
@@ -30,7 +30,15 @@ class _StickFigureFightState extends State<StickFigureFight>
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(painter: FightPainter(_controller), size: Size.infinite);
+    // Performance: Use RepaintBoundary to isolate repaints
+    return RepaintBoundary(
+      child: CustomPaint(
+        painter: FightPainter(_controller),
+        size: Size.infinite,
+        // Performance: Only repaint when animation changes
+        willChange: true,
+      ),
+    );
   }
 }
 

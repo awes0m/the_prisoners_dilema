@@ -6,6 +6,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final Color? backgroundColor;
   final Color? textColor;
   final List<Widget>? actions;
+  final bool isHomepage;
 
   const CustomAppBar({
     super.key,
@@ -13,11 +14,18 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.backgroundColor,
     this.textColor,
     this.actions,
+    this.isHomepage = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
+      leading: isHomepage
+          ? null
+          : IconButton(
+              icon: Icon(Icons.arrow_back, color: Colors.orange),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
       title: Row(
         mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
@@ -37,7 +45,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       centerTitle: true,
       clipBehavior: Clip.hardEdge,
-      backgroundColor: backgroundColor ?? Colors.blue[800],
+      backgroundColor: backgroundColor ?? Colors.blueGrey.shade900,
       scrolledUnderElevation: 4.0,
       elevation: 4,
       shadowColor: Colors.black54,
