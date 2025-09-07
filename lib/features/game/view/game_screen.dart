@@ -10,7 +10,7 @@ import '../widgets/score_display.dart';
 import 'game_end_screen.dart';
 import '../widgets/game_history.dart';
 import '../widgets/player_controls.dart';
-import '../widgets/stick_figure_area.dart';
+import '../widgets/enhanced_prisoner_area.dart';
 import '../../info/view/how_to_play_screen.dart';
 
 class GameScreen extends ConsumerStatefulWidget {
@@ -75,9 +75,10 @@ class _GameScreenState extends ConsumerState<GameScreen> {
     return Scaffold(
       appBar: CustomAppBar(
         text: 'Round ${currentRound + 1}',
-        backgroundColor: Colors.blue[800],
+        backgroundColor: Colors.blueGrey.shade400,
         actions: [
-          TextButton(
+          IconButton(
+            icon: const Icon(Icons.help_outline, color: Colors.white),
             onPressed: () {
               Navigator.push(
                 context,
@@ -86,10 +87,7 @@ class _GameScreenState extends ConsumerState<GameScreen> {
                 ),
               );
             },
-            child: const Text(
-              'ℹ️ Game Rules',
-              style: TextStyle(color: Colors.white),
-            ),
+            tooltip: 'How-to-play Game Instructions',
           ),
           IconButton(
             icon: Icon(
@@ -110,91 +108,99 @@ class _GameScreenState extends ConsumerState<GameScreen> {
           ),
         ],
       ),
-      body: Stack(
-        children: [
-          // Animated gradient background for a livelier feel
-          Positioned.fill(
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(seconds: 8),
-              onEnd: () {},
-              builder: (context, value, _) {
-                return Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        Colors.blueGrey.shade100,
-                        Color.lerp(
-                          Colors.blueGrey.shade50,
-                          Colors.white,
-                          value * 0.6,
-                        )!,
-                        Color.lerp(
-                          Colors.orange.shade900,
-                          Colors.black38,
-                          value * 0.4,
-                        )!,
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 400),
-            switchInCurve: Curves.easeOutCubic,
-            switchOutCurve: Curves.easeInCubic,
-            child: gameEnded
-                ? Stack(
-                    key: const ValueKey('end'),
-                    children: const [
-                      GameEndScreen(),
-                      // Confetti overlay (drawn by GameEndConfetti below)
-                    ],
-                  )
-                : Column(
-                    key: const ValueKey('gameColumn'),
-                    children: [
-                      // Score Display
-                      ScoreDisplay(
-                        totalPlayer1Score: totalPlayer1Score,
-                        totalPlayer2Score: totalPlayer2Score,
-                        mode: mode,
+      body: SafeArea(
+        child: Stack(
+          children: [
+            // Animated gradient background for a livelier feel
+            Positioned.fill(
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(seconds: 8),
+                onEnd: () {},
+                builder: (context, value, _) {
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blueGrey.shade100,
+                          Color.lerp(
+                            Colors.blueGrey.shade50,
+                            Colors.white,
+                            value * 0.6,
+                          )!,
+                          Color.lerp(
+                            Colors.orange.shade900,
+                            Colors.black38,
+                            value * 0.4,
+                          )!,
+                        ],
                       ),
-
-                      // Stick Figures and Animation Area
-                      const Expanded(child: StickFigureArea()),
-
-                      // Action Buttons
-                      if (!gameEnded)
-                        Container(
-                          padding: const EdgeInsets.all(16),
-                          child: mode == GameMode.vsHuman
-                              ? const TwoPlayerControls()
-                              : const SinglePlayerControls(),
+                    ),
+                  );
+                },
+              ),
+            ),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 400),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: gameEnded
+                  ? Stack(
+                      key: const ValueKey('end'),
+                      children: const [
+                        GameEndScreen(),
+                        // Confetti overlay (drawn by GameEndConfetti below)
+                      ],
+                    )
+                  : Column(
+                      key: const ValueKey('gameColumn'),
+                      children: [
+                        // Score Display
+                        ScoreDisplay(
+                          totalPlayer1Score: totalPlayer1Score,
+                          totalPlayer2Score: totalPlayer2Score,
+                          mode: mode,
                         ),
 
-                      // History
-                      if (history.isNotEmpty)
-                        const SizedBox(height: 120, child: GameHistoryWidget()),
-                    ],
-                  ),
-          ),
-          // Confetti layer shown when game ends
-          if (gameEnded)
-            GameEndConfetti(
-              winner: totalPlayer1Score == totalPlayer2Score
-                  ? Winner.tie
-                  : (totalPlayer1Score > totalPlayer2Score
-                        ? Winner.p1
-                        : Winner.p2),
+                        // Enhanced Prisoner Area with Animations
+                        const Expanded(
+                          child: SingleChildScrollView(
+                            child: EnhancedPrisonerArea(),
+                          ),
+                        ),
+
+                        // Action Buttons
+                        if (!gameEnded)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            child: mode == GameMode.vsHuman
+                                ? const TwoPlayerControls()
+                                : const SinglePlayerControls(),
+                          ),
+
+                        // History
+                        if (history.isNotEmpty)
+                          const SizedBox(
+                            height: 120,
+                            child: GameHistoryWidget(),
+                          ),
+                      ],
+                    ),
             ),
-        ],
+            // Confetti layer shown when game ends
+            if (gameEnded)
+              GameEndConfetti(
+                winner: totalPlayer1Score == totalPlayer2Score
+                    ? Winner.tie
+                    : (totalPlayer1Score > totalPlayer2Score
+                          ? Winner.p1
+                          : Winner.p2),
+              ),
+          ],
+        ),
       ),
     );
   }
 }
-

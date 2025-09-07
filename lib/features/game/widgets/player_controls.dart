@@ -39,12 +39,12 @@ class SinglePlayerControls extends ConsumerWidget {
   }
 }
 
-
 class TwoPlayerControls extends ConsumerStatefulWidget {
   const TwoPlayerControls({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _TwoPlayerControlsState();
+  ConsumerState<ConsumerStatefulWidget> createState() =>
+      _TwoPlayerControlsState();
 }
 
 class _TwoPlayerControlsState extends ConsumerState<TwoPlayerControls> {
@@ -63,82 +63,94 @@ class _TwoPlayerControlsState extends ConsumerState<TwoPlayerControls> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
+        Expanded(
+          child: Column(
+            children: [
+              Text(
+                'Player 1 Choice:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  Text('Player 1 Choice:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => setState(() => player1Action = GameAction.cooperate),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: player1Action == GameAction.cooperate
-                              ? Colors.green
-                              : Colors.grey,
-                        ),
-                        child: Text('🤝'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => setState(() => player1Action = GameAction.defect),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: player1Action == GameAction.defect
-                              ? Colors.red
-                              : Colors.grey,
-                        ),
-                        child: Text('⚔️'),
-                      ),
-                    ],
+                  ElevatedButton(
+                    onPressed: () =>
+                        setState(() => player1Action = GameAction.cooperate),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: player1Action == GameAction.cooperate
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
+                    child: Text('🤝'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () =>
+                        setState(() => player1Action = GameAction.defect),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: player1Action == GameAction.defect
+                          ? Colors.red
+                          : Colors.grey,
+                    ),
+                    child: Text('⚔️'),
                   ),
                 ],
               ),
-            ),
-            SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                children: [
-                  Text('Player 2 Choice:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      ElevatedButton(
-                        onPressed: () => setState(() => player2Action = GameAction.cooperate),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: player2Action == GameAction.cooperate
-                              ? Colors.green
-                              : Colors.grey,
-                        ),
-                        child: Text('🤝'),
-                      ),
-                      ElevatedButton(
-                        onPressed: () => setState(() => player2Action = GameAction.defect),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: player2Action == GameAction.defect
-                              ? Colors.red
-                              : Colors.grey,
-                        ),
-                        child: Text('⚔️'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-        SizedBox(height: 16),
+        SizedBox(width: 10),
         ElevatedButton(
-          onPressed: player1Action != null && player2Action != null ? _submitActions : null,
+          onPressed: player1Action != null && player2Action != null
+              ? _submitActions
+              : null,
           style: ElevatedButton.styleFrom(
             padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+            foregroundColor: (player1Action != null && player2Action != null)
+                ? Colors.green
+                : Colors.grey,
           ),
-          child: Text('Submit Round'),
+          child: Text('Done'),
+        ),
+
+        SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            children: [
+              Text(
+                'Player 2 Choice:',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () =>
+                        setState(() => player2Action = GameAction.cooperate),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: player2Action == GameAction.cooperate
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
+                    child: Text('🤝'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () =>
+                        setState(() => player2Action = GameAction.defect),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: player2Action == GameAction.defect
+                          ? Colors.red
+                          : Colors.grey,
+                    ),
+                    child: Text('⚔️'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );

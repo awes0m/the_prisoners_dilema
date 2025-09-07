@@ -4,8 +4,6 @@
 
 A comprehensive Flutter application implementing the classic Prisoner's Dilemma game theory concept. The game features multiple AI strategies, local multiplayer, animated visuals, and educational content about game theory. It provides both entertainment and educational value by demonstrating various strategies in the iterated Prisoner's Dilemma.
 
-
-
 ## Screenshot
 
 <img src="assets/screenshots/main_page.jpg" alt="The Prisoner's Dilemma" width="222"/>
@@ -13,6 +11,8 @@ A comprehensive Flutter application implementing the classic Prisoner's Dilemma 
 <img src="assets/screenshots/strategies.jpg" alt="The Prisoner's Dilemma" width="222"/>
 
 ### [Play game 🎮!](awes0m.github.io/the_prisoners_dilema)
+
+### [Download for android](https://github.com/awes0m/tpdgame/blob/main/release/)
 
 ## Structure
 

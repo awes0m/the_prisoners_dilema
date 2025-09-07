@@ -52,21 +52,19 @@ class StrategySelectionScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: CustomAppBar(
-        text: 'Choose AI Strategy',
+        text: 'Choose Strategy',
         backgroundColor: Colors.blue[800],
         actions: [
-          TextButton.icon(
-            icon: Icon(Icons.games_outlined, color: Colors.white),
+          IconButton(
+            icon: Icon(Icons.perm_device_info_sharp, color: Colors.white),
+            autofocus: true,
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => StrategyPage()),
               );
             },
-            label: Text(
-              'Strategy Guide',
-              style: TextStyle(color: Colors.white),
-            ),
+            tooltip: 'Strategy Guide',
           ),
         ],
       ),
@@ -85,7 +83,7 @@ class StrategySelectionScreen extends ConsumerWidget {
             padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: (MediaQuery.of(context).size.width > 600) ? 3 : 2,
-              childAspectRatio: 7 / 4,
+              childAspectRatio: 3 / 2,
               mainAxisSpacing: 16,
             ),
             itemCount: strategies.length,
@@ -153,7 +151,7 @@ class StrategySelectionScreen extends ConsumerWidget {
                         );
                       },
                       child: GridTile(
-                        header: Padding(
+                        footer: Padding(
                           padding: EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 8,
@@ -169,7 +167,7 @@ class StrategySelectionScreen extends ConsumerWidget {
                                 strategy['difficulty'] as String,
                                 style: TextStyle(
                                   color: Colors.white,
-                                  fontSize: 16,
+                                  fontSize: 10,
                                 ),
                               ),
                             ),
@@ -185,8 +183,9 @@ class StrategySelectionScreen extends ConsumerWidget {
                             child: Text(
                               strategy['name'] as String,
                               style: TextStyle(
+                                overflow: TextOverflow.clip,
                                 fontWeight: FontWeight.bold,
-                                fontSize: 20,
+                                fontSize: 16,
                               ),
                             ),
                           ),

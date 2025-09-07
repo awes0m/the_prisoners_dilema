@@ -8,7 +8,8 @@ class ScoreDisplay extends StatelessWidget {
   final int totalPlayer2Score;
   final GameMode mode;
 
-  const ScoreDisplay({super.key, 
+  const ScoreDisplay({
+    super.key,
     required this.totalPlayer1Score,
     required this.totalPlayer2Score,
     required this.mode,
@@ -18,33 +19,27 @@ class ScoreDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
       color: Colors.grey[100],
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Column(
+          Row(
             children: [
               const Text(
-                'Player 1',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                'Player 1 : ',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               Text(
                 '$totalPlayer1Score',
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: Colors.blue,
-                ),
+                style: const TextStyle(fontSize: 24, color: Colors.blue),
               ),
             ],
           ),
-          Column(
+          Row(
             children: [
               Text(
-                mode == GameMode.vsComputer ? 'Computer' : 'Player 2',
+                mode == GameMode.vsComputer ? 'Computer :' : 'Player 2 : ',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -52,10 +47,7 @@ class ScoreDisplay extends StatelessWidget {
               ),
               Text(
                 '$totalPlayer2Score',
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: Colors.red,
-                ),
+                style: const TextStyle(fontSize: 24, color: Colors.red),
               ),
             ],
           ),
