@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:the_prisoners_dilema/common/app_bar.dart';
 
-import '../common/strategy_list.dart';
-import '../widgets/pay_off_matrix.dart';
+import '../../../core/strategy_list.dart';
+import '../../game/widgets/pay_off_matrix.dart';
 
 class StrategyPage extends StatelessWidget {
   const StrategyPage({super.key});

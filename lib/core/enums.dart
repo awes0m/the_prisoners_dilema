@@ -14,3 +14,6 @@ enum StrategyType {
   suspicious,
   generous,
 }
+
+enum Winner { p1, p2, tie }
+

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../common/enums.dart';
-import '../repository/game_notifier.dart';
+import '../../../core/enums.dart';
+import '../../../controller/game_notifier.dart';
 
+/// Displays the game end screen with final scores and options to play again or go back to main menu.
 class GameEndScreen extends ConsumerWidget {
   const GameEndScreen({super.key});
 

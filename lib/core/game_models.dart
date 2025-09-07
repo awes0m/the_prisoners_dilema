@@ -1,6 +1,6 @@
 // Game Models
 
-import '../common/enums.dart';
+import 'enums.dart';
 
 class GameResult {
   final int player1Score;

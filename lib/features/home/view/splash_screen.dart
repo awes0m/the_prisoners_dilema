@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
-import '../common/circular_app_icon.dart';
+import '../../../common/circular_app_icon.dart';
 import 'home_screen.dart';
 
 class SplashScreen extends StatefulWidget {

@@ -1,8 +1,8 @@
 // Strategy Interface and Implementations
 import 'dart:math';
 
-import '../common/enums.dart';
-import 'models.dart';
+import 'enums.dart';
+import 'game_models.dart';
 
 abstract class Strategy {
   String get name;

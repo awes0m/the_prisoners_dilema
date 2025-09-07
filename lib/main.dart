@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pwa_install/pwa_install.dart';
-import 'view/splash_screen.dart';
+import 'features/home/view/splash_screen.dart';
 
 // Main App
+/// Main entry point for the app.
+///
+/// Initializes the Flutter binding, sets up the PWA install callback,
+/// and runs the app with the root widget wrapped in a [ProviderScope].
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   PWAInstall().setup(
@@ -14,6 +18,7 @@ void main() {
   runApp(const ProviderScope(child: PrisonersDilemmaApp()));
 }
 
+// Main App
 class PrisonersDilemmaApp extends StatelessWidget {
   const PrisonersDilemmaApp({super.key});
 
@@ -38,4 +43,3 @@ class PrisonersDilemmaApp extends StatelessWidget {
   }
 }
 
-// Splash Screen Widget

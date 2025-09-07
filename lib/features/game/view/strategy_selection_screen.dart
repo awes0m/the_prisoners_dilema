@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_prisoners_dilema/common/app_bar.dart';
 
-import '../common/enums.dart';
-import '../repository/game_notifier.dart';
-import '../models/strategy.dart';
+import '../../../core/enums.dart';
+import '../../../controller/game_notifier.dart';
+import '../../../core/strategy.dart';
 import 'game_screen.dart';
-import 'strategy_guide_screen.dart';
+import '../../info/view/strategy_guide_screen.dart';
 
 class StrategySelectionScreen extends ConsumerWidget {
   const StrategySelectionScreen({super.key});

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:the_prisoners_dilema/common/app_bar.dart';
-import 'package:the_prisoners_dilema/view/how_to_play_screen.dart';
+import 'package:the_prisoners_dilema/features/info/view/how_to_play_screen.dart';
 
-import '../common/circular_app_icon.dart';
-import '../common/enums.dart';
-import '../repository/game_notifier.dart';
-import '../widgets/stick_figure_fight.dart';
-import 'game_screen.dart';
-import 'strategy_guide_screen.dart';
-import 'strategy_selection_screen.dart';
+import '../../../common/circular_app_icon.dart';
+import '../../../core/enums.dart';
+import '../../../controller/game_notifier.dart';
+import '../../game/widgets/stick_figure_fight.dart';
+import '../../game/view/game_screen.dart';
+import '../../info/view/strategy_guide_screen.dart';
+import '../../game/view/strategy_selection_screen.dart';
+import 'widgets/background.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -29,9 +30,9 @@ class HomeScreen extends ConsumerWidget {
       body: Stack(
         children: [
           // Performance: Use const gradient container to avoid rebuilds
-          const _BackgroundGradient(),
+          const BackgroundGradient(),
           // Performance: Optimize animated overlay
-          _GameEndedOverlay(gameEnded: gameEnded),
+          GameEndedOverlay(gameEnded: gameEnded),
           // Performance: Only show fight animation when needed
           if (!gameEnded) const StickFigureFight(),
 
@@ -53,73 +54,13 @@ class HomeScreen extends ConsumerWidget {
                     child: RichText(
                       overflow: TextOverflow.clip,
                       text: TextSpan(
+                        text: '🧍Two prisoners must decide🧍‍♂️',
                         children: [
                           TextSpan(
-                            text: '🧍Two prisoners must decide🧍‍♂️',
-
-                            children: [
-                              TextSpan(
-                                text: ' \n🤝 Co-operate',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.lightGreen.shade500,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                      color: Colors.black54,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' OR ',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                      color: Colors.black87,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              TextSpan(
-                                text: ' Betray 🗡️',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.red.shade300,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                      color: Colors.black87,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              TextSpan(
-                                text:
-                                    '\n\nWill you trust your opponent,\nor\n Will you outsmart them? \n',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  shadows: [
-                                    Shadow(
-                                      offset: Offset(1, 1),
-                                      blurRadius: 2,
-                                      color: Colors.black26,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                            text: ' \nCo-operate ',
                             style: TextStyle(
-                              fontSize: 32,
-                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.lightGreen.shade500,
                               shadows: [
                                 Shadow(
                                   offset: Offset(1, 1),
@@ -129,7 +70,62 @@ class HomeScreen extends ConsumerWidget {
                               ],
                             ),
                           ),
+                          TextSpan(
+                            text: '🤝 OR 🗡️',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 24,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black87,
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextSpan(
+                            text: ' Betray',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.red.shade300,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black87,
+                                ),
+                              ],
+                            ),
+                          ),
+                          TextSpan(
+                            text:
+                                '\n\nWill you trust your opponent, or outsmart them? \n',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                              color: Colors.white,
+                              shadows: [
+                                Shadow(
+                                  offset: Offset(1, 1),
+                                  blurRadius: 2,
+                                  color: Colors.black26,
+                                ),
+                              ],
+                            ),
+                          ),
                         ],
+                        style: TextStyle(
+                          fontSize: 32,
+                          color: Colors.white,
+                          shadows: [
+                            Shadow(
+                              offset: Offset(1, 1),
+                              blurRadius: 2,
+                              color: Colors.black54,
+                            ),
+                          ],
+                        ),
                       ),
                       textAlign: TextAlign.center,
                       softWrap: true,
@@ -152,6 +148,7 @@ class HomeScreen extends ConsumerWidget {
                   ),
                   SizedBox(height: 30),
                   // Buttons for navigation
+                  // vs Computer -- Strategy Selection
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(
@@ -172,6 +169,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 15),
+                  // vs Human -- Game Screen
                   ElevatedButton.icon(
                     onPressed: () {
                       ref
@@ -193,6 +191,7 @@ class HomeScreen extends ConsumerWidget {
                     ),
                   ),
                   SizedBox(height: 30),
+                  // Info Buttons
                   ElevatedButton.icon(
                     onPressed: () {
                       Navigator.push(
@@ -237,41 +236,6 @@ class HomeScreen extends ConsumerWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-// Performance: Separate const widgets to avoid rebuilds
-class _BackgroundGradient extends StatelessWidget {
-  const _BackgroundGradient();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Colors.blue.shade400, Colors.purple.shade200],
-        ),
-      ),
-    );
-  }
-}
-
-class _GameEndedOverlay extends StatelessWidget {
-  final bool gameEnded;
-
-  const _GameEndedOverlay({required this.gameEnded});
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned.fill(
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300), // Reduced duration
-        curve: Curves.easeInOut, // Simpler curve
-        color: gameEnded ? Colors.blueGrey : Colors.transparent,
       ),
     );
   }

@@ -36,10 +36,10 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_riverpod: ^2.6.1
 
-  pwa_install: ^0.0.6
 
   # Lightweight audio for SFX
   audioplayers: ^6.1.0
+  pwa_install: ^0.0.6
 
 dev_dependencies:
   flutter_test:
@@ -61,7 +61,6 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: "assets/prisoners_dilema.png"
-    background_color: "#fffff"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

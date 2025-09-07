@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../common/app_bar.dart';
+import '../../../common/app_bar.dart';
 import 'strategy_guide_screen.dart';
 
 class HowToPlayScreen extends StatefulWidget {

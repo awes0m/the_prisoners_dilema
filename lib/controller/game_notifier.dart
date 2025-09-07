@@ -1,9 +1,11 @@
 // Game Logic Provider
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../common/enums.dart';
-import '../models/models.dart';
-import '../models/strategy.dart';
+import '../core/core.dart';
+
+final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
+  return GameNotifier();
+});
 
 class GameNotifier extends StateNotifier<GameState> {
   GameNotifier() : super(GameState());
@@ -117,7 +119,3 @@ class GameNotifier extends StateNotifier<GameState> {
     );
   }
 }
-
-final gameProvider = StateNotifierProvider<GameNotifier, GameState>((ref) {
-  return GameNotifier();
-});
